@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>车上存货记账</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background:#f2f4f7; color:#222; padding-bottom:90px; }
+  .wrap { max-width:520px; margin:0 auto; padding:12px; }
+  h1 { font-size:18px; text-align:center; padding:10px 0 4px; }
+  .sub { text-align:center; font-size:12px; color:#888; margin-bottom:10px; }
+
+  .stock-card { background:#fff; border-radius:12px; padding:14px; margin-bottom:12px; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+  .stock-card h2 { font-size:14px; color:#666; margin-bottom:8px; }
+  .stock-row { display:flex; justify-content:space-between; align-items:center; padding:9px 4px; border-bottom:1px solid #f0f0f0; font-size:15px; }
+  .stock-row:last-child { border-bottom:none; }
+  .stock-row .qty { font-weight:700; font-size:16px; text-align:right; }
+  .stock-row .qty small { display:block; font-weight:400; font-size:12px; color:#999; }
+  .qty.pos { color:#0a7d32; } .qty.zero { color:#aaa; }
+
+  .panel { background:#fff; border-radius:12px; padding:14px; margin-bottom:12px; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+  .panel h3 { font-size:14px; color:#666; margin-bottom:10px; }
+  .seg { display:flex; gap:8px; margin-bottom:10px; }
+  .seg button { flex:1; padding:10px; border:1.5px solid #d9dce1; background:#fff; border-radius:8px; font-size:15px; font-weight:600; color:#555; }
+  .seg button.on-in { background:#e8f5ee; border-color:#0a7d32; color:#0a7d32; }
+  .seg button.on-out { background:#fdeeee; border-color:#c0392b; color:#c0392b; }
+  .seg button.on-ret { background:#fff7e6; border-color:#b8860b; color:#b8860b; }
+  .form-row { display:flex; gap:8px; margin-bottom:8px; align-items:center; }
+  select, input { padding:10px; border:1.5px solid #d9dce1; border-radius:8px; font-size:16px; background:#fff; }
+  input[type=number] { width:110px; text-align:center; }
+  .unit-seg { display:flex; border:1.5px solid #d9dce1; border-radius:8px; overflow:hidden; }
+  .unit-seg button { padding:10px 12px; border:none; background:#fff; font-size:14px; font-weight:600; color:#777; }
+  .unit-seg button.on { background:#2563eb; color:#fff; }
+  .hint { font-size:12px; color:#999; margin-bottom:8px; }
+  .add-btn { width:100%; padding:12px; background:#2563eb; color:#fff; border:none; border-radius:8px; font-size:16px; font-weight:700; }
+  .add-btn:active { opacity:.85; }
+
+  /* 自动补全下拉 */
+  .ac-wrap { position:relative; flex:1; width:100%; }
+  .ac-list { position:absolute; top:calc(100% + 4px); left:0; right:0; background:#fff; border:1px solid #e0e3e8; border-radius:8px; box-shadow:0 6px 16px rgba(0,0,0,.14); z-index:40; max-height:250px; overflow-y:auto; }
+  .ac-item { padding:10px 12px; font-size:15px; border-bottom:1px solid #f5f5f5; }
+  .ac-item:last-child { border-bottom:none; }
+  .ac-item:active, .ac-item:hover { background:#f0f6ff; }
+  .ac-item small { color:#999; font-size:12px; }
+  .ac-create { color:#2563eb; font-weight:600; }
+  .hidden { display:none !important; }
+
+  .rec { background:#fff; border-radius:10px; padding:10px 12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 1px 3px rgba(0,0,0,.05); }
+  .rec .info { font-size:13px; color:#666; margin-top:2px; }
+  .tag { font-size:12px; padding:2px 8px; border-radius:10px; font-weight:700; }
+  .tag.in { background:#e8f5ee; color:#0a7d32; }
+  .tag.out { background:#fdeeee; color:#c0392b; }
+  .tag.ret { background:#fff7e6; color:#b8860b; }
+  .rec .amt { font-weight:700; font-size:15px; }
+  .del { color:#c0392b; font-size:20px; padding:4px 8px; }
+  .empty { text-align:center; color:#aaa; font-size:14px; padding:20px 0; }
+
+  .toolbar { display:flex; gap:8px; margin:4px 0 10px; }
+  .toolbar button { flex:1; padding:8px; border:1px solid #d9dce1; background:#fff; border-radius:8px; font-size:13px; color:#555; }
+
+  .top-actions { position:fixed; top:10px; right:12px; display:flex; gap:6px; }
+  .top-actions button { padding:6px 10px; font-size:12px; border:1px solid #ccc; background:#fff; border-radius:6px; }
+
+  nav { position:fixed; bottom:0; left:0; right:0; background:#fff; border-top:1px solid #e5e5e5; display:flex; }
+  nav button { flex:1; padding:14px 0 16px; border:none; background:none; font-size:14px; color:#888; font-weight:600; }
+  nav button.on { color:#2563eb; border-top:2px solid #2563eb; margin-top:-1px; }
+
+  .sum-table { width:100%; border-collapse:collapse; font-size:13px; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+  .sum-table th, .sum-table td { padding:9px 6px; text-align:center; border-bottom:1px solid #f0f0f0; }
+  .sum-table th { background:#f7f8fa; color:#666; font-size:12px; }
+  .sum-table td:first-child { text-align:left; }
+  .sum-table td b { font-size:13px; }
+  .cust-detail { font-size:12px; color:#777; line-height:1.7; text-align:left; }
+
+  /* 盘点 */
+  .pan-row { background:#fff; border-radius:10px; padding:10px 12px; margin-bottom:8px; box-shadow:0 1px 3px rgba(0,0,0,.05); }
+  .pan-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .pan-head b { font-size:15px; }
+  .pan-head .exp { font-size:12px; color:#999; }
+  .pan-inp { display:flex; align-items:center; gap:6px; font-size:14px; color:#666; }
+  .pan-inp input { width:80px; text-align:center; padding:8px; }
+  .res-row { display:flex; justify-content:space-between; align-items:center; background:#fff; border-radius:10px; padding:10px 12px; margin-bottom:8px; box-shadow:0 1px 3px rgba(0,0,0,.05); border-left:4px solid #ccc; }
+  .res-row.ok { border-left-color:#0a7d32; }
+  .res-row.bad { border-left-color:#c0392b; background:#fff7f6; }
+  .res-row.more { border-left-color:#b8860b; background:#fffcf2; }
+  .res-row .info { font-size:12px; color:#888; margin-top:2px; }
+  .res-row .diff { font-weight:700; font-size:14px; text-align:right; }
+  .pan-btns { display:flex; gap:8px; margin-top:12px; }
+  .pan-btns button { flex:1; padding:12px; border:none; border-radius:8px; font-size:15px; font-weight:700; }
+  .btn-fix { background:#c0392b; color:#fff; }
+  .btn-back { background:#eee; color:#555; }
+  .btn-redo { background:#eee; color:#555; }
+  .stat-bar { display:flex; gap:6px; margin-bottom:10px; }
+  .stat-bar span { flex:1; text-align:center; background:#f7f8fa; border-radius:8px; padding:8px 4px; font-size:13px; }
+
+  dialog { border:none; border-radius:12px; padding:16px; width:86%; max-width:400px; }
+  dialog::backdrop { background:rgba(0,0,0,.4); }
+  dialog h4 { margin-bottom:10px; }
+  dialog input { width:100%; margin-bottom:10px; }
+  dialog .row { display:flex; gap:8px; }
+  dialog button { flex:1; padding:10px; border-radius:8px; border:none; font-size:15px; font-weight:600; }
+  dialog .fr { display:flex; gap:8px; }
+  dialog .fr input[type=number]{ width:90px; }
+</style>
+</head>
+<body>
+<div class="top-actions">
+  <button onclick="exportData()">导出备份</button>
+  <button onclick="document.getElementById('imp').click()">导入</button>
+</div>
+<div class="wrap">
+  <h1>🚚 车上存货记账</h1>
+  <div class="sub">拿货按件 · 卖出按件或按包 · 盘点核对账实</div>
+
+  <div id="page-stock">
+    <div class="stock-card">
+      <h2>📦 当前车上结余（账面）</h2>
+      <div id="stockList"></div>
+    </div>
+
+    <div class="panel">
+      <h3>➕ 记一笔</h3>
+      <div class="seg">
+        <button id="b-in"  onclick="setType('in')">📥 仓库拿货</button>
+        <button id="b-out" onclick="setType('out')">📤 卖出</button>
+        <button id="b-ret" onclick="setType('ret')">↩️ 客户退货</button>
+      </div>
+      <div class="form-row">
+        <div class="ac-wrap">
+          <input type="text" id="fProduct" placeholder="产品：输入名字选择，新名字可新增" autocomplete="off" style="width:100%">
+          <div class="ac-list hidden" id="acProduct"></div>
+        </div>
+      </div>
+      <div class="form-row">
+        <input type="number" id="fQty" min="1" placeholder="数量" inputmode="numeric">
+        <div class="unit-seg" id="unitSeg">
+          <button id="u-case" onclick="setUnit('case')">件</button>
+          <button id="u-unit" onclick="setUnit('unit')">包</button>
+        </div>
+      </div>
+      <div class="form-row" id="custRow" style="display:none">
+        <div class="ac-wrap">
+          <input type="text" id="fCust" placeholder="客户：输入名字选择，自动记住" autocomplete="off" style="width:100%">
+          <div class="ac-list hidden" id="acCust"></div>
+        </div>
+      </div>
+      <div class="form-row">
+        <input type="text" id="fNote" style="width:100%" placeholder="备注（单号/门店，可不填）">
+      </div>
+      <div class="hint" id="typeHint"></div>
+      <button class="add-btn" onclick="addRec()">确认记录</button>
+    </div>
+
+    <div class="toolbar">
+      <button onclick="showAddProduct()">+ 新增产品</button>
+    </div>
+
+    <h3 style="font-size:14px;color:#666;margin:2px 0 8px;">📋 最近流水（点🗑删除）</h3>
+    <div id="recList"></div>
+  </div>
+
+  <div id="page-pan" class="hidden">
+    <div class="panel" id="panPanel"></div>
+  </div>
+
+  <div id="page-sum" class="hidden">
+    <div class="panel">
+      <h3>📊 汇总对账表</h3>
+      <table class="sum-table">
+        <thead><tr><th>产品</th><th>拿货</th><th>卖出</th><th>退货</th><th>盘点±</th><th>车上应有</th></tr></thead>
+        <tbody id="sumBody"></tbody>
+      </table>
+      <div class="hint" style="margin-top:10px;">💡 拿货列对照仓库出货单（件数）；"车上应有"=账面数。实物清点到「盘点」页核对。</div>
+    </div>
+    <div class="panel">
+      <h3>👥 按客户汇总（累计拿货 = 卖出 − 退货）</h3>
+      <table class="sum-table">
+        <thead><tr><th style="width:32%">客户</th><th>累计拿货明细</th></tr></thead>
+        <tbody id="custBody"></tbody>
+      </table>
+    </div>
+    <div class="toolbar">
+      <button onclick="exportCSV()">导出Excel(CSV)</button>
+      <button onclick="exportData()">导出备份</button>
+    </div>
+  </div>
+</div>
+
+<nav>
+  <button id="nav-stock" class="on" onclick="switchPage('stock')">📦 记账</button>
+  <button id="nav-pan" onclick="switchPage('pan')">🔄 盘点</button>
+  <button id="nav-sum" onclick="switchPage('sum')">📊 对账</button>
+</nav>
+
+<dialog id="dlgProduct">
+  <h4>新增产品</h4>
+  <input type="text" id="newName" placeholder="产品名称">
+  <div class="fr">
+    <input type="number" id="newPer" min="1" placeholder="每件数量" inputmode="numeric">
+    <input type="text" id="newUnit" placeholder="单位（包/桶/支）">
+  </div>
+  <div class="hint">如：A产品 每件 30 包；B产品 每件 6 桶</div>
+  <div class="row">
+    <button style="background:#eee;color:#555" onclick="dlgProduct.close()">取消</button>
+    <button style="background:#2563eb;color:#fff" onclick="addProduct()">保存</button>
+  </div>
+</dialog>
+
+<input type="file" id="imp" accept=".json" class="hidden" onchange="importData(this)">
+
+<script>
+const KEY = 'van_stock_v2';
+let state = JSON.parse(localStorage.getItem(KEY) || '{"products":[],"records":[]}');
+if(!state.customers) state.customers = [];   // 兼容旧数据
+let type = 'in', unit = 'case';
+let selProduct = null, selCustomer = null;
+let seq = 0;
+const TYPE_NAME = { in:'仓库拿货', out:'卖出', ret:'客户退货', pin:'盘盈', pout:'盘亏' };
+const TYPE_TAG  = { in:'in', out:'out', ret:'ret', pin:'in', pout:'out' };
+const nid = () => 'r' + Date.now() + '_' + (seq++);
+
+function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
+
+function switchPage(p){
+  ['stock','pan','sum'].forEach(k=>{
+    document.getElementById('page-'+k).classList.toggle('hidden', k!==p);
+    document.getElementById('nav-'+k).classList.toggle('on', k===p);
+  });
+  if(p==='sum'){ renderSum(); renderCustSum(); }
+  if(p==='pan') renderPan();
+}
+
+/* ---------- 自动补全（产品/客户通用） ---------- */
+function bindAC(input, list, getItems, opts){
+  const show = ()=>{
+    const q = input.value.trim();
+    let items = getItems();
+    if(q) items = items.filter(i=>i.name.includes(q));
+    items.sort((a,b)=>(b.lastUsed||0)-(a.lastUsed||0));
+    let html = items.slice(0,8).map(i=>`<div class="ac-item" data-id="${i.id}">${opts.itemHtml(i)}</div>`).join('');
+    if(q) html += `<div class="ac-item ac-create" data-id="__new__">${opts.createHtml(q)}</div>`;
+    list.innerHTML = html || `<div class="ac-item" style="color:#aaa">${opts.emptyText}</div>`;
+    list.classList.remove('hidden');
+  };
+  const hide = ()=> list.classList.add('hidden');
+  input.addEventListener('focus', show);
+  input.addEventListener('input', ()=>{ opts.onEdit(); show(); });
+  input.addEventListener('blur', ()=> setTimeout(hide, 150));
+  list.addEventListener('mousedown', e=>{
+    e.preventDefault();
+    const it = e.target.closest('.ac-item'); if(!it) return;
+    hide();
+    if(it.dataset.id==='__new__') opts.onCreate(input.value.trim());
+    else opts.onPick(it.dataset.id, input);
+  });
+}
+
+const pInput = document.getElementById('fProduct'), pList = document.getElementById('acProduct');
+bindAC(pInput, pList, ()=>state.products, {
+  itemHtml: p=>`${p.name} <small>1件=${p.perCase}${p.unitName}</small>`,
+  createHtml: q=>`➕ 新增产品「${q}」`,
+  emptyText: '还没有产品，输入名称即可新增',
+  onEdit: ()=>{ selProduct = null; },
+  onPick: (id, input)=>{
+    selProduct = state.products.find(p=>p.id===id);
+    if(selProduct){ selProduct.lastUsed = Date.now(); input.value = selProduct.name; save(); }
+    renderUnitSeg(); updateHint();
+  },
+  onCreate: q=>{ if(q) showAddProduct(q); }
+});
+
+const cInput = document.getElementById('fCust'), cList = document.getElementById('acCust');
+function useCustomer(name){
+  let c = state.customers.find(x=>x.name===name);
+  if(!c){ c = { id:'c'+Date.now(), name, lastUsed:Date.now() }; state.customers.push(c); save(); }
+  selCustomer = c; cInput.value = name;
+}
+bindAC(cInput, cList, ()=>state.customers, {
+  itemHtml: c=>`🏪 ${c.name}`,
+  createHtml: q=>`➕ 使用新客户「${q}」`,
+  emptyText: '还没有客户，输入名字自动记住',
+  onEdit: ()=>{ selCustomer = null; },
+  onPick: (id, input)=>{
+    selCustomer = state.customers.find(c=>c.id===id);
+    if(selCustomer){ selCustomer.lastUsed = Date.now(); input.value = selCustomer.name; save(); }
+  },
+  onCreate: q=>{ if(q) useCustomer(q); }
+});
+
+/* ---------- 记账 ---------- */
+function setType(t){
+  type = t; if(t==='in') unit = 'case';
+  ['in','out','ret'].forEach(k=>{
+    document.getElementById('b-'+k).className = k===t ? 'on-'+k : '';
+  });
+  document.getElementById('custRow').style.display = (t==='in') ? 'none' : '';
+  if(t==='in'){ cInput.value=''; selCustomer=null; }
+  renderUnitSeg(); updateHint();
+}
+function setUnit(u){ unit = u; renderUnitSeg(); }
+
+function renderUnitSeg(){
+  const p = selProduct;
+  const uname = p ? p.unitName : '包';
+  document.getElementById('u-case').classList.toggle('on', unit==='case');
+  document.getElementById('u-case').disabled = (type==='in');
+  const ub = document.getElementById('u-unit');
+  ub.textContent = uname;
+  ub.classList.toggle('on', unit==='unit');
+  ub.style.display = (type==='in') ? 'none' : '';
+}
+
+function updateHint(){
+  const p = selProduct;
+  document.getElementById('typeHint').textContent =
+    type==='in' ? '💡 拿货按件记，建议备注写出货单单号' :
+    (p ? `💡 选"件"自动按每件${p.perCase}${p.unitName}换算；选"${p.unitName}"按零头记` : '💡 先输入选择产品');
+}
+
+function stockOf(pid){ // 返回基础单位数：拿货/退货/盘盈 +，卖出/盘亏 −
+  let q = 0;
+  state.records.forEach(r=>{
+    if(r.pid!==pid) return;
+    q += (r.type==='out' || r.type==='pout') ? -r.qty : r.qty;
+  });
+  return q;
+}
+function fmtStock(units, p){
+  if(!p) return units;
+  if(units===0) return '—';
+  const cases = Math.floor(units / p.perCase), left = units % p.perCase;
+  if(cases===0) return left + p.unitName; // 不足一件只显示零头
+  return cases + '件' + (left ? '零' + left + p.unitName : '');
+}
+
+function addRec(){
+  const qty = parseInt(document.getElementById('fQty').value);
+  const note = document.getElementById('fNote').value.trim();
+  if(!selProduct) return alert('请先输入选择产品（输入名字可选，或点"+ 新增产品"）');
+  if(!qty || qty<=0) return alert('请输入正确数量');
+  const p = selProduct;
+  let units = qty, label = (unit==='case' ? qty+'件' : qty+p.unitName);
+  if(unit==='case'){
+    units = qty * p.perCase;
+    if(type!=='in') label += '（='+units+p.unitName+'）';
+  }
+  if(type==='out' && units > stockOf(p.id))
+    if(!confirm('⚠️ 卖出大于当前车上结余（'+fmtStock(stockOf(p.id),p)+'），确定没记错？')) return;
+  // 客户处理：选中的用之；输入了新名字自动建档
+  let custId = null, custName = '';
+  if(type!=='in'){
+    if(selCustomer){ custId = selCustomer.id; }
+    else{
+      const txt = cInput.value.trim();
+      if(txt){ useCustomer(txt); custId = selCustomer.id; }
+    }
+    if(custId){ const c = state.customers.find(x=>x.id===custId); custName = c ? c.name : ''; }
+  }
+  state.records.unshift({ id:nid(), pid:p.id, type, label, qty:units, note, custId, custName, time:new Date().toLocaleString('zh-CN',{hour12:false}) });
+  save();
+  document.getElementById('fQty').value=''; document.getElementById('fNote').value='';
+  cInput.value=''; selCustomer=null;
+  render();
+}
+
+function delRec(id){
+  if(!confirm('删除这条记录？')) return;
+  state.records = state.records.filter(r=>String(r.id)!==String(id));
+  save(); render();
+}
+
+function showAddProduct(name){
+  document.getElementById('newName').value = name||'';
+  document.getElementById('newPer').value=''; document.getElementById('newUnit').value='';
+  dlgProduct.showModal();
+}
+function addProduct(){
+  const n = document.getElementById('newName').value.trim();
+  const per = parseInt(document.getElementById('newPer').value);
+  const u = document.getElementById('newUnit').value.trim() || '包';
+  if(!n) return alert('请填产品名称');
+  if(!per || per<1) return alert('请填每件数量（如30）');
+  state.products.push({ id:'p'+Date.now(), name:n, perCase:per, unitName:u, lastUsed:Date.now() });
+  save(); dlgProduct.close(); render();
+  // 新增后直接选中，接着记数量就行
+  const np = state.products[state.products.length-1];
+  selProduct = np; pInput.value = np.name;
+  renderUnitSeg(); updateHint();
+}
+function delProduct(pid){
+  if(state.records.some(r=>r.pid===pid)) return alert('该产品已有流水记录，不能删（否则历史账会乱）');
+  if(!confirm('删除产品？')) return;
+  state.products = state.products.filter(p=>p.id!==pid);
+  if(selProduct && selProduct.id===pid){ selProduct=null; pInput.value=''; }
+  save(); render();
+}
+function delCustomer(cid){
+  if(state.records.some(r=>r.custId===cid)) return alert('该客户已有流水记录，不能删');
+  if(!confirm('删除客户？')) return;
+  state.customers = state.customers.filter(c=>c.id!==cid);
+  if(selCustomer && selCustomer.id===cid){ selCustomer=null; cInput.value=''; }
+  save(); render();
+}
+
+function custNameOf(r){
+  if(r.custId){
+    const c = state.customers.find(x=>x.id===r.custId);
+    return c ? c.name : (r.custName || '');
+  }
+  return '';
+}
+
+function fmtT(s){ return s.replace(/:\d{2}$/,''); }
+
+function render(){
+  const sl = document.getElementById('stockList');
+  if(!state.products.length){ sl.innerHTML = '<div class="empty">还没有产品，先在下方输入产品名或点"+ 新增产品"</div>'; }
+  else sl.innerHTML = state.products.map(p=>{
+    const q = stockOf(p.id);
+    return `<div class="stock-row">
+      <span>${p.name} <span style="color:#bbb;font-size:12px" onclick="delProduct('${p.id}')">✕</span></span>
+      <span class="qty ${q>0?'pos':'zero'}">${q>0?fmtStock(q,p):'0'}
+        <small>${q>0?('共'+q+p.unitName):''}</small></span>
+    </div>`;
+  }).join('');
+
+  const rl = document.getElementById('recList');
+  if(!state.records.length){ rl.innerHTML = '<div class="empty">暂无流水</div>'; }
+  else rl.innerHTML = state.records.slice(0,50).map(r=>{
+    const p = state.products.find(x=>x.id===r.pid);
+    const cn = custNameOf(r);
+    return `<div class="rec">
+      <div>
+        <span class="tag ${TYPE_TAG[r.type]}">${TYPE_NAME[r.type]}</span>
+        <b style="margin-left:6px">${p?p.name:'(已删产品)'}</b>
+        <span class="amt">${(r.type==='out'||r.type==='pout')?'−':'+'}${r.label}</span>
+        <div class="info">${cn?('🏪'+cn+' · '):''}${r.note?r.note+' · ':''}${fmtT(r.time)}</div>
+      </div>
+      <span class="del" onclick="delRec('${r.id}')">🗑</span>
+    </div>`;
+  }).join('');
+
+  renderUnitSeg(); updateHint();
+  if(!document.getElementById('page-sum').classList.contains('hidden')){ renderSum(); renderCustSum(); }
+  if(!document.getElementById('page-pan').classList.contains('hidden')) renderPan();
+}
+
+function renderSum(){
+  document.getElementById('sumBody').innerHTML = state.products.map(p=>{
+    let tin=0,tout=0,tret=0,tpan=0;
+    state.records.forEach(r=>{
+      if(r.pid!==p.id) return;
+      if(r.type==='in') tin+=r.qty;
+      else if(r.type==='out') tout+=r.qty;
+      else if(r.type==='ret') tret+=r.qty;
+      else if(r.type==='pin') tpan+=r.qty;
+      else if(r.type==='pout') tpan-=r.qty;
+    });
+    const bal = tin-tout+tret+tpan;
+    return `<tr><td>${p.name}</td><td>${tin/p.perCase}件</td><td>${fmtStock(tout,p)}</td><td>${fmtStock(tret,p)}</td><td>${tpan>0?'+'+fmtStock(tpan,p):(tpan<0?'−'+fmtStock(-tpan,p):'—')}</td><td><b>${fmtStock(bal,p)}</b></td></tr>`;
+  }).join('') || '<tr><td colspan="6" class="empty">暂无数据</td></tr>';
+}
+
+function renderCustSum(){
+  const map = {}; // custId|null -> {pid -> qty}
+  state.records.forEach(r=>{
+    if(r.type!=='out' && r.type!=='ret') return;
+    const k = r.custId || '__none__';
+    (map[k] = map[k]||{})[r.pid] = (map[k][r.pid]||0) + (r.type==='out' ? r.qty : -r.qty);
+  });
+  const keys = Object.keys(map);
+  document.getElementById('custBody').innerHTML = keys.length ? keys.map(k=>{
+    let name = '未记客户';
+    if(k!=='__none__'){
+      const c = state.customers.find(x=>x.id===k);
+      if(!c) return '';
+      name = `${c.name} <span style="color:#bbb;font-size:12px" onclick="delCustomer('${c.id}')">✕</span>`;
+    }
+    const detail = Object.keys(map[k]).map(pid=>{
+      const p = state.products.find(x=>x.id===pid);
+      const q = map[k][pid];
+      return `${p?p.name:'?'} ${q>0?fmtStock(q,p):fmtStock(Math.abs(q),p)+'（退货多）'}`;
+    }).join('<br>');
+    return `<tr><td>${name}</td><td class="cust-detail">${detail}</td></tr>`;
+  }).join('') : '<tr><td colspan="2" class="empty">暂无客户流水</td></tr>';
+}
+
+/* ---------- 盘点 ---------- */
+let panMode = 'input';        // input 录入 | result 结果
+let panEntries = {};          // pid -> {c:件, l:零}
+let panResult = [];
+
+function panInp(pid, k, v){ (panEntries[pid] = panEntries[pid]||{c:'',l:''})[k] = v; }
+
+function renderPan(){
+  const el = document.getElementById('panPanel');
+  if(panMode==='input'){
+    el.innerHTML = `<h3>🔄 盘点：清点车上实货</h3>
+      <div class="hint" style="margin-bottom:10px">💡 逐个产品数车上的实数填进去（只填件也行），没盘到的产品留空跳过。填完点「对比」。</div>` +
+      (state.products.length ? state.products.map(p=>{
+        const e = panEntries[p.id]||{c:'',l:''};
+        return `<div class="pan-row">
+          <div class="pan-head"><b>${p.name}</b><span class="exp">账面应有 ${fmtStock(stockOf(p.id),p)}</span></div>
+          <div class="pan-inp">
+            <input type="number" min="0" inputmode="numeric" placeholder="件" value="${e.c}" oninput="panInp('${p.id}','c',this.value)"> 件
+            零 <input type="number" min="0" inputmode="numeric" placeholder="${p.unitName}" value="${e.l}" oninput="panInp('${p.id}','l',this.value)"> ${p.unitName}
+          </div>
+        </div>`;
+      }).join('') : '<div class="empty">还没有产品，先去记账页新增</div>') +
+      `<div class="pan-btns"><button class="btn-fix" style="background:#2563eb" onclick="panCompare()">🔍 对比</button></div>`;
+  }else{
+    let nOk=0, nBad=0, nMore=0;
+    panResult.forEach(r=>{ if(r.diff===0)nOk++; else if(r.diff<0)nBad++; else nMore++; });
+    el.innerHTML = `<h3>🔄 盘点结果</h3>
+      <div class="stat-bar"><span>🟢 一致 ${nOk}</span><span style="color:#c0392b">🔴 少 ${nBad}</span><span style="color:#b8860b">🟡 多 ${nMore}</span></div>` +
+      panResult.map(r=>{
+        const p = r.p;
+        let cls, txt;
+        if(r.diff===0){ cls='ok'; txt='✅ 一致'; }
+        else if(r.diff<0){ cls='bad'; txt='🔴 少 '+fmtStock(-r.diff,p); }
+        else{ cls='more'; txt='🟡 多 '+fmtStock(r.diff,p); }
+        return `<div class="res-row ${cls}">
+          <div><b>${p.name}</b><div class="info">应有 ${fmtStock(r.exp,p)} · 实盘 ${fmtStock(r.act,p)}</div></div>
+          <span class="diff">${txt}</span>
+        </div>`;
+      }).join('') +
+      `<div class="hint" style="margin-top:8px">🔴 少了：可能漏记卖出或丢货；🟡 多了：可能漏记拿货或退货。</div>
+      <div class="pan-btns">
+        <button class="btn-back" onclick="panBackEdit()">返回修改</button>
+        <button class="btn-fix" onclick="panFix()">💊 一键补账拉平</button>
+      </div>
+      <div class="pan-btns"><button class="btn-redo" onclick="panReset()">🔄 重新盘点</button></div>`;
+  }
+}
+
+function panCompare(){
+  const rows = [];
+  state.products.forEach(p=>{
+    const e = panEntries[p.id];
+    if(!e || (e.c==='' && e.l==='')) return;
+    const act = (parseInt(e.c)||0)*p.perCase + (parseInt(e.l)||0);
+    const exp = stockOf(p.id);
+    rows.push({ p, act, exp, diff: act-exp });
+  });
+  if(!rows.length) return alert('先填至少一个产品的实盘数');
+  panResult = rows; panMode = 'result'; renderPan();
+}
+
+function panBackEdit(){ panMode='input'; renderPan(); }
+function panReset(){ panEntries={}; panResult=[]; panMode='input'; renderPan(); }
+
+function panFix(){
+  const diffs = panResult.filter(r=>r.diff!==0);
+  if(!diffs.length){ alert('全部一致，无需补账'); panReset(); return; }
+  const summary = diffs.map(r=>
+    `${r.p.name} ${r.diff<0?'少':'多'} ${fmtStock(Math.abs(r.diff),r.p)} → 补记${r.diff<0?'盘亏':'盘盈'}`
+  ).join('\n');
+  if(!confirm('将自动补记以下流水，把账面拉到实盘数：\n\n'+summary+'\n\n确认补账？')) return;
+  const t = new Date().toLocaleString('zh-CN',{hour12:false});
+  diffs.forEach(r=>{
+    const abs = Math.abs(r.diff);
+    state.records.unshift({
+      id:nid(), pid:r.p.id,
+      type: r.diff<0 ? 'pout' : 'pin',
+      label: fmtStock(abs, r.p), qty: abs,
+      note: '盘点修正', time: t
+    });
+  });
+  save(); panReset(); render();
+  alert('已补账，账实拉平 ✅');
+}
+
+/* ---------- 导出导入 ---------- */
+function exportCSV(){
+  if(!state.records.length) return alert('暂无流水');
+  let csv = '\uFEFF产品,类型,数量,折合,客户,备注,时间\n';
+  state.records.forEach(r=>{
+    const p = state.products.find(x=>x.id===r.pid);
+    csv += `"${p?p.name:''}","${TYPE_NAME[r.type]}","${r.label}","${r.qty}${p?p.unitName:''}","${custNameOf(r)}","${(r.note||'').replace(/"/g,'""')}","${r.time}"\n`;
+  });
+  dl(new Blob([csv],{type:'text/csv'}), '存货流水_'+new Date().toISOString().slice(0,10)+'.csv');
+}
+function exportData(){ dl(new Blob([JSON.stringify(state)],{type:'application/json'}), '车上存货备份_'+new Date().toISOString().slice(0,10)+'.json'); }
+function dl(blob, name){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); }
+function importData(inp){
+  const f = inp.files[0]; if(!f) return;
+  const rd = new FileReader();
+  rd.onload = ()=>{
+    try{
+      const d = JSON.parse(rd.result);
+      if(!d.products || !d.records) throw 0;
+      if(!d.customers) d.customers = [];
+      if(!confirm('导入会覆盖当前所有数据，继续？')) return;
+      state = d; save(); render(); alert('导入成功');
+    }catch(e){ alert('文件格式不对'); }
+  };
+  rd.readAsText(f); inp.value='';
+}
+
+setType('in'); render();
+</script>
+</body>
+</html>
