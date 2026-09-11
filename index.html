@@ -396,7 +396,7 @@ function submitOrder(){
     const unit = div.querySelector('.l-unit').classList.contains('on') ? 'unit' : 'case';
     let units = qty, label;
     if(unit==='case'){ units = qty * p.perCase; label = qty+'件'+(type!=='in'?'（='+units+p.unitName+'）':''); }
-    else label = qty + p.unitName;
+    else { units = qty; label = fmtStock(qty, p); } // 零头凑成整件时自动显示为"X件"
     rows.push({ p, units, label });
   });
   if(!rows.length) return alert('至少填一行有效明细（产品+数量）');
