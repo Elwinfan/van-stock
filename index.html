@@ -269,12 +269,17 @@ function bindAC(input, list, getItems, opts){
     if(q) items = items.filter(i=>i.name.includes(q));
     items.sort((a,b)=>(b.lastUsed||0)-(a.lastUsed||0));
     let html = items.slice(0,8).map(i=>`<div class="ac-item" data-id="${i.id}">${opts.itemHtml(i)}</div>`).join('');
-    if(q) html += `<div class="ac-item ac-create" data-id="__new__">${opts.createHtml(q)}</div>`;
+    if(q) html = `<div class="ac-item ac-create" data-id="__new__">${opts.createHtml(q)}</div>` + html; // 新增行置顶，防手机键盘挡住底部
     list.innerHTML = html || `<div class="ac-item" style="color:#aaa">${opts.emptyText}</div>`;
     list.classList.remove('hidden');
   };
   const hide = ()=> list.classList.add('hidden');
-  input.addEventListener('focus', show);
+  input.addEventListener('focus', ()=>{
+    show();
+    // 等手机键盘弹起后，把输入框滚到屏幕中部，避免建议列表被键盘挡住
+    clearTimeout(input._sh);
+    input._sh = setTimeout(()=>input.scrollIntoView({block:'center', behavior:'smooth'}), 350);
+  });
   input.addEventListener('input', ()=>{ opts.onEdit(input); show(); });
   input.addEventListener('blur', ()=> setTimeout(hide, 150));
   list.addEventListener('mousedown', e=>{
