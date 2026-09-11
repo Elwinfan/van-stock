@@ -107,6 +107,11 @@
   .stat-bar { display:flex; gap:6px; margin-bottom:10px; }
   .stat-bar span { flex:1; text-align:center; background:#f7f8fa; border-radius:8px; padding:8px 4px; font-size:13px; }
 
+  #backupBar { background:#fff7e6; border:1px solid #f0d998; border-radius:10px; padding:10px 12px; margin-bottom:12px; font-size:13px; color:#7a5c00; display:flex; align-items:center; gap:8px; }
+  #backupBar button { padding:6px 10px; border:none; border-radius:6px; font-size:12px; font-weight:600; flex:none; }
+  #backupBar .go { background:#b8860b; color:#fff; }
+  #backupBar .no { background:transparent; color:#999; font-size:16px; }
+
   #toast { position:fixed; left:50%; bottom:140px; transform:translateX(-50%) translateY(10px); background:rgba(20,20,20,.85); color:#fff; padding:10px 22px; border-radius:20px; font-size:14px; opacity:0; pointer-events:none; transition:.25s; z-index:99; white-space:nowrap; }
   #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
@@ -126,6 +131,11 @@
   <button onclick="document.getElementById('imp').click()">导入</button>
 </div>
 <div class="wrap">
+  <div id="backupBar" class="hidden">
+    <span style="flex:1">⚠️ 已超过7天没导出备份，防丢账建议立即备份</span>
+    <button class="go" onclick="exportData()">立即导出</button>
+    <button class="no" onclick="dismissBackup()">×</button>
+  </div>
   <h1>🚚 车上存货记账</h1>
   <div class="sub">按单记账 · 日期可查 · 盘点核对账实</div>
 
@@ -237,6 +247,19 @@ function toast(msg){
   if(!t){ t = document.createElement('div'); t.id='toast'; document.body.appendChild(t); }
   t.textContent = msg; t.classList.add('show');
   clearTimeout(t._h); t._h = setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+/* 备份提醒：超过7天没导出备份弹横幅 */
+const DISMISS_KEY = 'van_backup_dismiss';
+function renderBackupBar(){
+  const bar = document.getElementById('backupBar');
+  const stale = state.backupAt && (Date.now() - state.backupAt > 7*86400000);
+  const dismissed = localStorage.getItem(DISMISS_KEY) === todayStr();
+  bar.classList.toggle('hidden', !(stale && state.records.length && !dismissed));
+}
+function dismissBackup(){
+  localStorage.setItem(DISMISS_KEY, todayStr());
+  renderBackupBar();
 }
 
 function todayStr(){
@@ -387,19 +410,25 @@ function submitOrder(){
     custId = selCustomer.id;
     const c = state.customers.find(x=>x.id===custId); custName = c ? c.name : '';
   }
-  // 收集有效行
-  const rows = [];
-  document.querySelectorAll('#lines .line-row').forEach(div=>{
+  // 收集明细行：无效行（半填/小数）先列出，确认后才跳过
+  const rows = [], bad = [];
+  document.querySelectorAll('#lines .line-row').forEach((div,i)=>{
     const p = state.products.find(x=>x.id===div.dataset.pid);
-    const qty = parseInt(div.querySelector('.l-qty').value);
-    if(!p || !qty || qty<=0) return;
+    const raw = div.querySelector('.l-qty').value.trim();
+    if(!p && !raw) return; // 全空行静默忽略
+    if(!p){ bad.push('第'+(i+1)+'行：填了数量没选产品'); return; }
+    if(!raw || !/^\d+$/.test(raw) || parseInt(raw)<1){ bad.push('第'+(i+1)+'行：数量须填正整数（当前"'+(raw||'空')+'"）'); return; }
+    const qty = parseInt(raw);
     const unit = div.querySelector('.l-unit').classList.contains('on') ? 'unit' : 'case';
     let units = qty, label;
     if(unit==='case'){ units = qty * p.perCase; label = qty+'件'+(type!=='in'?'（='+units+p.unitName+'）':''); }
     else { units = qty; label = fmtStock(qty, p); } // 零头凑成整件时自动显示为"X件"
     rows.push({ p, units, label });
   });
-  if(!rows.length) return alert('至少填一行有效明细（产品+数量）');
+  if(bad.length){
+    if(!confirm('以下 '+bad.length+' 行有问题，将跳过不记：\n\n'+bad.join('\n')+'\n\n确定跳过并记其余行？（取消=回去修改）')) return;
+  }
+  if(!rows.length) return alert('没有有效明细行（产品+数量）');
 
   if(type==='out'){
     for(const r of rows){
@@ -497,6 +526,21 @@ function addProduct(){
   const per = parseInt(document.getElementById('newPer').value);
   const u = document.getElementById('newUnit').value.trim() || '包';
   if(!n) return alert('请填产品名称');
+  // 查重：已有同名产品直接复用，避免重复产品拆分结余
+  const exist = state.products.find(p=>p.name===n);
+  if(exist){
+    if(!confirm('已有产品「'+n+'」（1件='+exist.perCase+exist.unitName+'），直接选用它？')) return;
+    dlgProduct.close();
+    const div = window._pendingLine || document.querySelector('#lines .line-row:last-child');
+    if(div){
+      div.dataset.pid = exist.id;
+      div.querySelector('.l-prod').value = exist.name;
+      div.querySelector('.l-unit').textContent = exist.unitName;
+    }
+    window._pendingLine = null;
+    toast('已选用现有产品「'+n+'」');
+    return;
+  }
   if(!per || per<1) return alert('请填每件数量（如30）');
   state.products.push({ id:'p'+Date.now(), name:n, perCase:per, unitName:u, lastUsed:Date.now() });
   save(); dlgProduct.close(); render();
@@ -670,8 +714,16 @@ function panBackEdit(){ panMode='input'; renderPan(); }
 function panReset(){ panEntries={}; panResult=[]; panMode='input'; renderPan(); }
 
 function panFix(){
-  const diffs = panResult.filter(r=>r.diff!==0);
-  if(!diffs.length){ toast('全部一致，无需补账'); panReset(); return; }
+  // 复核：以当前实盘输入 + 当前库存实时重算差异（防对比之后又记过账导致补错）
+  const diffs = [];
+  state.products.forEach(p=>{
+    const e = panEntries[p.id];
+    if(!e || (e.c==='' && e.l==='')) return;
+    const act = (parseInt(e.c)||0)*p.perCase + (parseInt(e.l)||0);
+    const diff = act - stockOf(p.id);
+    if(diff!==0) diffs.push({ p, diff });
+  });
+  if(!diffs.length){ toast('当前全部一致，无需补账'); panReset(); return; }
   const summary = diffs.map(r=>
     `${r.p.name} ${r.diff<0?'少':'多'} ${fmtStock(Math.abs(r.diff),r.p)} → 补记${r.diff<0?'盘亏':'盘盈'}`
   ).join('\n');
@@ -700,7 +752,7 @@ function exportCSV(){
   });
   dl(new Blob([csv],{type:'text/csv'}), '存货流水_'+new Date().toISOString().slice(0,10)+'.csv');
 }
-function exportData(){ dl(new Blob([JSON.stringify(state)],{type:'application/json'}), '车上存货备份_'+new Date().toISOString().slice(0,10)+'.json'); }
+function exportData(){ dl(new Blob([JSON.stringify(state)],{type:'application/json'}), '车上存货备份_'+new Date().toISOString().slice(0,10)+'.json'); state.backupAt = Date.now(); save(); renderBackupBar(); }
 function dl(blob, name){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); }
 function importData(inp){
   const f = inp.files[0]; if(!f) return;
@@ -711,7 +763,7 @@ function importData(inp){
       if(!d.products || !d.records) throw 0;
       if(!d.customers) d.customers = [];
       if(!confirm('导入会覆盖当前所有数据，继续？')) return;
-      state = d; save(); render(); toast('导入成功');
+      state = d; if(!state.backupAt) state.backupAt = Date.now(); save(); render(); toast('导入成功'); renderBackupBar();
     }catch(e){ alert('文件格式不对'); }
   };
   rd.readAsText(f); inp.value='';
@@ -719,7 +771,8 @@ function importData(inp){
 
 document.getElementById('fDate').value = todayStr();
 document.getElementById('qDate').value = todayStr();
-setType('in'); addLine(); render();
+if(!state.backupAt){ state.backupAt = Date.now(); save(); } // 首次静默起算，7天后开始提醒备份
+setType('in'); addLine(); render(); renderBackupBar();
 </script>
 </body>
 </html>
