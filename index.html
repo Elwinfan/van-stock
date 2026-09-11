@@ -171,7 +171,7 @@
         <thead><tr><th>产品</th><th>拿货</th><th>卖出</th><th>退货</th><th>盘点±</th><th>车上应有</th></tr></thead>
         <tbody id="sumBody"></tbody>
       </table>
-      <div class="hint" style="margin-top:10px;">💡 拿货列对照仓库出货单（件数）；"车上应有"=账面数。实物清点到「盘点」页核对。</div>
+      <div class="hint" style="margin-top:10px;">💡 拿货列对照仓库出货单；"车上应有"=账面数。实物清点到「盘点」页核对。</div>
     </div>
     <div class="panel">
       <h3>👥 按客户汇总（累计拿货 = 卖出 − 退货）</h3>
@@ -304,17 +304,15 @@ function renderUnitSeg(){
   const p = selProduct;
   const uname = p ? p.unitName : '包';
   document.getElementById('u-case').classList.toggle('on', unit==='case');
-  document.getElementById('u-case').disabled = (type==='in');
   const ub = document.getElementById('u-unit');
   ub.textContent = uname;
   ub.classList.toggle('on', unit==='unit');
-  ub.style.display = (type==='in') ? 'none' : '';
 }
 
 function updateHint(){
   const p = selProduct;
   document.getElementById('typeHint').textContent =
-    type==='in' ? '💡 拿货按件记，建议备注写出货单单号' :
+    type==='in' ? '💡 默认按件记；散装拿货可切零头记。建议备注写出货单单号' :
     (p ? `💡 选"件"自动按每件${p.perCase}${p.unitName}换算；选"${p.unitName}"按零头记` : '💡 先输入选择产品');
 }
 
@@ -458,7 +456,7 @@ function renderSum(){
       else if(r.type==='pout') tpan-=r.qty;
     });
     const bal = tin-tout+tret+tpan;
-    return `<tr><td>${p.name}</td><td>${tin/p.perCase}件</td><td>${fmtStock(tout,p)}</td><td>${fmtStock(tret,p)}</td><td>${tpan>0?'+'+fmtStock(tpan,p):(tpan<0?'−'+fmtStock(-tpan,p):'—')}</td><td><b>${fmtStock(bal,p)}</b></td></tr>`;
+    return `<tr><td>${p.name}</td><td>${fmtStock(tin,p)}</td><td>${fmtStock(tout,p)}</td><td>${fmtStock(tret,p)}</td><td>${tpan>0?'+'+fmtStock(tpan,p):(tpan<0?'−'+fmtStock(-tpan,p):'—')}</td><td><b>${fmtStock(bal,p)}</b></td></tr>`;
   }).join('') || '<tr><td colspan="6" class="empty">暂无数据</td></tr>';
 }
 
