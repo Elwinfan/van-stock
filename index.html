@@ -2,11 +2,11 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>车上存货记账</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background:#f2f4f7; color:#222; padding-bottom:90px; }
+  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background:#f2f4f7; color:#222; padding-bottom:calc(110px + env(safe-area-inset-bottom)); }
   .wrap { max-width:520px; margin:0 auto; padding:12px; }
   h1 { font-size:18px; text-align:center; padding:10px 0 4px; }
   .sub { text-align:center; font-size:12px; color:#888; margin-bottom:10px; }
@@ -62,7 +62,7 @@
   .top-actions { position:fixed; top:10px; right:12px; display:flex; gap:6px; }
   .top-actions button { padding:6px 10px; font-size:12px; border:1px solid #ccc; background:#fff; border-radius:6px; }
 
-  nav { position:fixed; bottom:0; left:0; right:0; background:#fff; border-top:1px solid #e5e5e5; display:flex; }
+  nav { position:fixed; bottom:0; left:0; right:0; background:#fff; border-top:1px solid #e5e5e5; display:flex; padding-bottom:env(safe-area-inset-bottom); }
   nav button { flex:1; padding:14px 0 16px; border:none; background:none; font-size:14px; color:#888; font-weight:600; }
   nav button.on { color:#2563eb; border-top:2px solid #2563eb; margin-top:-1px; }
 
@@ -425,7 +425,7 @@ function render(){
 
   const rl = document.getElementById('recList');
   if(!state.records.length){ rl.innerHTML = '<div class="empty">暂无流水</div>'; }
-  else rl.innerHTML = state.records.slice(0,50).map(r=>{
+  else rl.innerHTML = state.records.map(r=>{
     const p = state.products.find(x=>x.id===r.pid);
     const cn = custNameOf(r);
     return `<div class="rec">
