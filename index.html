@@ -17,7 +17,7 @@
   .stock-row:last-child { border-bottom:none; }
   .stock-row .qty { font-weight:700; font-size:16px; text-align:right; }
   .stock-row .qty small { display:block; font-weight:400; font-size:12px; color:#999; }
-  .qty.pos { color:#0a7d32; } .qty.zero { color:#aaa; }
+  .qty.pos { color:#0a7d32; } .qty.zero { color:#aaa; } .qty.neg { color:#c0392b; }
 
   .panel { background:#fff; border-radius:12px; padding:14px; margin-bottom:12px; box-shadow:0 1px 4px rgba(0,0,0,.06); }
   .panel h3 { font-size:14px; color:#666; margin-bottom:10px; }
@@ -25,16 +25,24 @@
   .seg button { flex:1; padding:10px; border:1.5px solid #d9dce1; background:#fff; border-radius:8px; font-size:15px; font-weight:600; color:#555; }
   .seg button.on-in { background:#e8f5ee; border-color:#0a7d32; color:#0a7d32; }
   .seg button.on-out { background:#fdeeee; border-color:#c0392b; color:#c0392b; }
-  .seg button.on-ret { background:#fff7e6; border-color:#b8860b; color:#b8860b; }
   .form-row { display:flex; gap:8px; margin-bottom:8px; align-items:center; }
   select, input { padding:10px; border:1.5px solid #d9dce1; border-radius:8px; font-size:16px; background:#fff; }
   input[type=number] { width:110px; text-align:center; }
-  .unit-seg { display:flex; border:1.5px solid #d9dce1; border-radius:8px; overflow:hidden; }
-  .unit-seg button { padding:10px 12px; border:none; background:#fff; font-size:14px; font-weight:600; color:#777; }
-  .unit-seg button.on { background:#2563eb; color:#fff; }
+  input[type=date] { flex:1; }
   .hint { font-size:12px; color:#999; margin-bottom:8px; }
   .add-btn { width:100%; padding:12px; background:#2563eb; color:#fff; border:none; border-radius:8px; font-size:16px; font-weight:700; }
   .add-btn:active { opacity:.85; }
+
+  /* 单据多行 */
+  .line-row { border:1px solid #eceef1; border-radius:10px; padding:10px; margin-bottom:10px; background:#fafbfc; }
+  .line-row .r1 { display:flex; gap:6px; align-items:center; margin-bottom:8px; }
+  .line-row .r2 { display:flex; gap:8px; align-items:center; }
+  .line-row .r2 input[type=number] { flex:1; width:auto; }
+  .l-del { color:#c0392b; font-size:18px; padding:6px 8px; flex:none; }
+  .unit-seg { display:flex; border:1.5px solid #d9dce1; border-radius:8px; overflow:hidden; flex:none; }
+  .unit-seg button { padding:10px 12px; border:none; background:#fff; font-size:14px; font-weight:600; color:#777; }
+  .unit-seg button.on { background:#2563eb; color:#fff; }
+  .add-line { width:100%; padding:10px; background:#fff; border:1.5px dashed #b8c4d4; border-radius:8px; font-size:14px; color:#2563eb; font-weight:600; margin-bottom:10px; }
 
   /* 自动补全下拉 */
   .ac-wrap { position:relative; flex:1; width:100%; }
@@ -46,20 +54,25 @@
   .ac-create { color:#2563eb; font-weight:600; }
   .hidden { display:none !important; }
 
-  .rec { background:#fff; border-radius:10px; padding:10px 12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 1px 3px rgba(0,0,0,.05); }
-  .rec .info { font-size:13px; color:#666; margin-top:2px; }
-  .tag { font-size:12px; padding:2px 8px; border-radius:10px; font-weight:700; }
+  /* 单据卡片（速览+查单共用） */
+  .order-card { background:#fff; border-radius:10px; padding:10px 12px; margin-bottom:10px; box-shadow:0 1px 3px rgba(0,0,0,.05); }
+  .order-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; padding-bottom:6px; border-bottom:1px solid #f0f0f0; }
+  .order-head .who { font-weight:700; font-size:15px; }
+  .order-head .dt { font-size:12px; color:#999; }
+  .order-line { display:flex; justify-content:space-between; padding:5px 0; font-size:14px; }
+  .order-line .amt { font-weight:600; }
+  .order-line .amt.neg { color:#c0392b; } .order-line .amt.pos { color:#0a7d32; }
+  .tag { font-size:12px; padding:2px 8px; border-radius:10px; font-weight:700; flex:none; margin-right:8px; }
   .tag.in { background:#e8f5ee; color:#0a7d32; }
   .tag.out { background:#fdeeee; color:#c0392b; }
   .tag.ret { background:#fff7e6; color:#b8860b; }
-  .rec .amt { font-weight:700; font-size:15px; }
   .del { color:#c0392b; font-size:20px; padding:4px 8px; }
   .empty { text-align:center; color:#aaa; font-size:14px; padding:20px 0; }
 
   .toolbar { display:flex; gap:8px; margin:4px 0 10px; }
   .toolbar button { flex:1; padding:8px; border:1px solid #d9dce1; background:#fff; border-radius:8px; font-size:13px; color:#555; }
 
-  .top-actions { position:fixed; top:10px; right:12px; display:flex; gap:6px; }
+  .top-actions { position:fixed; top:10px; right:12px; display:flex; gap:6px; z-index:50; }
   .top-actions button { padding:6px 10px; font-size:12px; border:1px solid #ccc; background:#fff; border-radius:6px; }
 
   nav { position:fixed; bottom:0; left:0; right:0; background:#fff; border-top:1px solid #e5e5e5; display:flex; padding-bottom:env(safe-area-inset-bottom); }
@@ -94,6 +107,9 @@
   .stat-bar { display:flex; gap:6px; margin-bottom:10px; }
   .stat-bar span { flex:1; text-align:center; background:#f7f8fa; border-radius:8px; padding:8px 4px; font-size:13px; }
 
+  #toast { position:fixed; left:50%; bottom:140px; transform:translateX(-50%) translateY(10px); background:rgba(20,20,20,.85); color:#fff; padding:10px 22px; border-radius:20px; font-size:14px; opacity:0; pointer-events:none; transition:.25s; z-index:99; white-space:nowrap; }
+  #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
   dialog { border:none; border-radius:12px; padding:16px; width:86%; max-width:400px; }
   dialog::backdrop { background:rgba(0,0,0,.4); }
   dialog h4 { margin-bottom:10px; }
@@ -111,7 +127,7 @@
 </div>
 <div class="wrap">
   <h1>🚚 车上存货记账</h1>
-  <div class="sub">拿货按件 · 卖出按件或按包 · 盘点核对账实</div>
+  <div class="sub">按单记账 · 日期可查 · 盘点核对账实</div>
 
   <div id="page-stock">
     <div class="stock-card">
@@ -120,24 +136,13 @@
     </div>
 
     <div class="panel">
-      <h3>➕ 记一笔</h3>
+      <h3>➕ 记一张单</h3>
       <div class="seg">
         <button id="b-in"  onclick="setType('in')">📥 仓库拿货</button>
         <button id="b-out" onclick="setType('out')">📤 卖出</button>
-        <button id="b-ret" onclick="setType('ret')">↩️ 客户退货</button>
       </div>
       <div class="form-row">
-        <div class="ac-wrap">
-          <input type="text" id="fProduct" placeholder="产品：输入名字选择，新名字可新增" autocomplete="off" style="width:100%">
-          <div class="ac-list hidden" id="acProduct"></div>
-        </div>
-      </div>
-      <div class="form-row">
-        <input type="number" id="fQty" min="1" placeholder="数量" inputmode="numeric">
-        <div class="unit-seg" id="unitSeg">
-          <button id="u-case" onclick="setUnit('case')">件</button>
-          <button id="u-unit" onclick="setUnit('unit')">包</button>
-        </div>
+        <input type="date" id="fDate">
       </div>
       <div class="form-row" id="custRow" style="display:none">
         <div class="ac-wrap">
@@ -145,19 +150,24 @@
           <div class="ac-list hidden" id="acCust"></div>
         </div>
       </div>
-      <div class="form-row">
-        <input type="text" id="fNote" style="width:100%" placeholder="备注（单号/门店，可不填）">
-      </div>
+      <div id="lines"></div>
+      <button class="add-line" onclick="addLine()">＋ 加一行产品</button>
       <div class="hint" id="typeHint"></div>
-      <button class="add-btn" onclick="addRec()">确认记录</button>
+      <button class="add-btn" onclick="submitOrder()">确认记单</button>
     </div>
 
-    <div class="toolbar">
-      <button onclick="showAddProduct()">+ 新增产品</button>
-    </div>
-
-    <h3 style="font-size:14px;color:#666;margin:2px 0 8px;">📋 最近流水（点🗑删除）</h3>
+    <h3 style="font-size:14px;color:#666;margin:2px 0 8px;">📋 最近单据（查历史去「查单」页）</h3>
     <div id="recList"></div>
+  </div>
+
+  <div id="page-find" class="hidden">
+    <div class="panel">
+      <h3>🔎 按日期查单</h3>
+      <div class="form-row">
+        <input type="date" id="qDate" onchange="renderOrders()">
+      </div>
+      <div id="orderList"></div>
+    </div>
   </div>
 
   <div id="page-pan" class="hidden">
@@ -168,13 +178,13 @@
     <div class="panel">
       <h3>📊 汇总对账表</h3>
       <table class="sum-table">
-        <thead><tr><th>产品</th><th>拿货</th><th>卖出</th><th>退货</th><th>盘点±</th><th>车上应有</th></tr></thead>
+        <thead id="sumHead"></thead>
         <tbody id="sumBody"></tbody>
       </table>
       <div class="hint" style="margin-top:10px;">💡 拿货列对照仓库出货单；"车上应有"=账面数。实物清点到「盘点」页核对。</div>
     </div>
     <div class="panel">
-      <h3>👥 按客户汇总（累计拿货 = 卖出 − 退货）</h3>
+      <h3>👥 按客户汇总（累计卖出）</h3>
       <table class="sum-table">
         <thead><tr><th style="width:32%">客户</th><th>累计拿货明细</th></tr></thead>
         <tbody id="custBody"></tbody>
@@ -188,7 +198,8 @@
 </div>
 
 <nav>
-  <button id="nav-stock" class="on" onclick="switchPage('stock')">📦 记账</button>
+  <button id="nav-stock" class="on" onclick="switchPage('stock')">📝 记单</button>
+  <button id="nav-find" onclick="switchPage('find')">🔎 查单</button>
   <button id="nav-pan" onclick="switchPage('pan')">🔄 盘点</button>
   <button id="nav-sum" onclick="switchPage('sum')">📊 对账</button>
 </nav>
@@ -213,8 +224,7 @@
 const KEY = 'van_stock_v2';
 let state = JSON.parse(localStorage.getItem(KEY) || '{"products":[],"records":[]}');
 if(!state.customers) state.customers = [];   // 兼容旧数据
-let type = 'in', unit = 'case';
-let selProduct = null, selCustomer = null;
+let type = 'in';
 let seq = 0;
 const TYPE_NAME = { in:'仓库拿货', out:'卖出', ret:'客户退货', pin:'盘盈', pout:'盘亏' };
 const TYPE_TAG  = { in:'in', out:'out', ret:'ret', pin:'in', pout:'out' };
@@ -222,16 +232,36 @@ const nid = () => 'r' + Date.now() + '_' + (seq++);
 
 function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
 
+function toast(msg){
+  let t = document.getElementById('toast');
+  if(!t){ t = document.createElement('div'); t.id='toast'; document.body.appendChild(t); }
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._h); t._h = setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+// 记录归属日期：单据日期优先，老记录取流水时间的日期部分
+function toKey(r){
+  if(r.odate) return r.odate;
+  const m = (r.time||'').match(/(\d+)\/(\d+)\/(\d+)/);
+  return m ? m[1] + '-' + String(m[2]).padStart(2,'0') + '-' + String(m[3]).padStart(2,'0') : '';
+}
+function fmtDateKey(k){ return k ? k.replace(/-/g,'/') : ''; }
+
 function switchPage(p){
-  ['stock','pan','sum'].forEach(k=>{
+  ['stock','find','pan','sum'].forEach(k=>{
     document.getElementById('page-'+k).classList.toggle('hidden', k!==p);
     document.getElementById('nav-'+k).classList.toggle('on', k===p);
   });
   if(p==='sum'){ renderSum(); renderCustSum(); }
   if(p==='pan') renderPan();
+  if(p==='find') renderOrders();
 }
 
-/* ---------- 自动补全（产品/客户通用） ---------- */
+/* ---------- 自动补全 ---------- */
 function bindAC(input, list, getItems, opts){
   const show = ()=>{
     const q = input.value.trim();
@@ -245,32 +275,19 @@ function bindAC(input, list, getItems, opts){
   };
   const hide = ()=> list.classList.add('hidden');
   input.addEventListener('focus', show);
-  input.addEventListener('input', ()=>{ opts.onEdit(); show(); });
+  input.addEventListener('input', ()=>{ opts.onEdit(input); show(); });
   input.addEventListener('blur', ()=> setTimeout(hide, 150));
   list.addEventListener('mousedown', e=>{
     e.preventDefault();
     const it = e.target.closest('.ac-item'); if(!it) return;
     hide();
-    if(it.dataset.id==='__new__') opts.onCreate(input.value.trim());
-    else opts.onPick(it.dataset.id, input);
+    if(it.dataset.id==='__new__') opts.onCreate(input.value.trim(), input, list);
+    else opts.onPick(it.dataset.id, input, list);
   });
 }
 
-const pInput = document.getElementById('fProduct'), pList = document.getElementById('acProduct');
-bindAC(pInput, pList, ()=>state.products, {
-  itemHtml: p=>`${p.name} <small>1件=${p.perCase}${p.unitName}</small>`,
-  createHtml: q=>`➕ 新增产品「${q}」`,
-  emptyText: '还没有产品，输入名称即可新增',
-  onEdit: ()=>{ selProduct = null; },
-  onPick: (id, input)=>{
-    selProduct = state.products.find(p=>p.id===id);
-    if(selProduct){ selProduct.lastUsed = Date.now(); input.value = selProduct.name; save(); }
-    renderUnitSeg(); updateHint();
-  },
-  onCreate: q=>{ if(q) showAddProduct(q); }
-});
-
 const cInput = document.getElementById('fCust'), cList = document.getElementById('acCust');
+let selCustomer = null;
 function useCustomer(name){
   let c = state.customers.find(x=>x.name===name);
   if(!c){ c = { id:'c'+Date.now(), name, lastUsed:Date.now() }; state.customers.push(c); save(); }
@@ -281,42 +298,136 @@ bindAC(cInput, cList, ()=>state.customers, {
   createHtml: q=>`➕ 使用新客户「${q}」`,
   emptyText: '还没有客户，输入名字自动记住',
   onEdit: ()=>{ selCustomer = null; },
-  onPick: (id, input)=>{
+  onPick: (id)=>{
     selCustomer = state.customers.find(c=>c.id===id);
-    if(selCustomer){ selCustomer.lastUsed = Date.now(); input.value = selCustomer.name; save(); }
+    if(selCustomer){ selCustomer.lastUsed = Date.now(); cInput.value = selCustomer.name; save(); }
   },
   onCreate: q=>{ if(q) useCustomer(q); }
 });
 
-/* ---------- 记账 ---------- */
+/* ---------- 单据多行 ---------- */
+let lineSeq = 0;
+function addLine(){
+  const id = 'L' + (lineSeq++);
+  const div = document.createElement('div');
+  div.className = 'line-row';
+  div.dataset.lid = id;
+  div.innerHTML = `
+    <div class="r1">
+      <div class="ac-wrap">
+        <input type="text" class="l-prod" placeholder="产品：输入名字选择" autocomplete="off" style="width:100%">
+        <div class="ac-list hidden"></div>
+      </div>
+      <span class="l-del" onclick="delLine(this)">✕</span>
+    </div>
+    <div class="r2">
+      <input type="number" class="l-qty" min="1" placeholder="数量" inputmode="numeric">
+      <div class="unit-seg">
+        <button type="button" class="l-case on" onclick="setLineUnit(this,'case')">件</button>
+        <button type="button" class="l-unit" onclick="setLineUnit(this,'unit')">包</button>
+      </div>
+    </div>`;
+  document.getElementById('lines').appendChild(div);
+  const pInput = div.querySelector('.l-prod'), pList = div.querySelector('.ac-list');
+  bindAC(pInput, pList, ()=>state.products, {
+    itemHtml: p=>`${p.name} <small>1件=${p.perCase}${p.unitName}</small>`,
+    createHtml: q=>`➕ 新增产品「${q}」`,
+    emptyText: '还没有产品，输入名称即可新增',
+    onEdit: (inp)=>{ div.dataset.pid = ''; },
+    onPick: (pid, inp)=>{
+      const p = state.products.find(x=>x.id===pid);
+      if(p){
+        p.lastUsed = Date.now(); div.dataset.pid = pid; inp.value = p.name;
+        div.querySelector('.l-unit').textContent = p.unitName;
+        save();
+      }
+    },
+    onCreate: (q)=>{ if(q) showAddProduct(q, div); }
+  });
+}
+function delLine(btn){
+  const box = btn.closest('.line-row');
+  box.remove();
+  if(!document.querySelectorAll('.line-row').length) addLine();
+}
+function setLineUnit(btn, u){
+  const seg = btn.parentElement;
+  seg.querySelector('.l-case').classList.toggle('on', u==='case');
+  seg.querySelector('.l-unit').classList.toggle('on', u==='unit');
+}
+
 function setType(t){
-  type = t; if(t==='in') unit = 'case';
-  ['in','out','ret'].forEach(k=>{
+  type = t;
+  ['in','out'].forEach(k=>{
     document.getElementById('b-'+k).className = k===t ? 'on-'+k : '';
   });
   document.getElementById('custRow').style.display = (t==='in') ? 'none' : '';
   if(t==='in'){ cInput.value=''; selCustomer=null; }
-  renderUnitSeg(); updateHint();
+  updateHint();
 }
-function setUnit(u){ unit = u; renderUnitSeg(); }
-
-function renderUnitSeg(){
-  const p = selProduct;
-  const uname = p ? p.unitName : '包';
-  document.getElementById('u-case').classList.toggle('on', unit==='case');
-  const ub = document.getElementById('u-unit');
-  ub.textContent = uname;
-  ub.classList.toggle('on', unit==='unit');
-}
-
 function updateHint(){
-  const p = selProduct;
   document.getElementById('typeHint').textContent =
-    type==='in' ? '💡 默认按件记；散装拿货可切零头记。建议备注写出货单单号' :
-    (p ? `💡 选"件"自动按每件${p.perCase}${p.unitName}换算；选"${p.unitName}"按零头记` : '💡 先输入选择产品');
+    type==='in' ? '💡 拿货单：默认按件，散装可切零头。多行一次入账' :
+    '💡 卖出单：选客户 + 多行产品，一次入账。默认按件，可切零头';
 }
 
-function stockOf(pid){ // 返回基础单位数：拿货/退货/盘盈 +，卖出/盘亏 −
+function submitOrder(){
+  const dateVal = document.getElementById('fDate').value;
+  if(!dateVal) return alert('请选日期');
+  // 客户（卖出必填）
+  let custId = null, custName = '';
+  if(type==='out'){
+    if(!selCustomer && cInput.value.trim()) useCustomer(cInput.value.trim());
+    if(!selCustomer) return alert('卖出单请先选/输客户');
+    custId = selCustomer.id;
+    const c = state.customers.find(x=>x.id===custId); custName = c ? c.name : '';
+  }
+  // 收集有效行
+  const rows = [];
+  document.querySelectorAll('#lines .line-row').forEach(div=>{
+    const p = state.products.find(x=>x.id===div.dataset.pid);
+    const qty = parseInt(div.querySelector('.l-qty').value);
+    if(!p || !qty || qty<=0) return;
+    const unit = div.querySelector('.l-unit').classList.contains('on') ? 'unit' : 'case';
+    let units = qty, label;
+    if(unit==='case'){ units = qty * p.perCase; label = qty+'件'+(type!=='in'?'（='+units+p.unitName+'）':''); }
+    else label = qty + p.unitName;
+    rows.push({ p, units, label });
+  });
+  if(!rows.length) return alert('至少填一行有效明细（产品+数量）');
+
+  if(type==='out'){
+    for(const r of rows){
+      if(r.units > stockOf(r.p.id)){
+        if(!confirm('⚠️ '+r.p.name+' 卖出大于当前结余（'+fmtStock(stockOf(r.p.id),r.p)+'），确定没记错？')) return;
+      }
+    }
+  }
+
+  const orderId = 'o' + Date.now();
+  const now = new Date().toLocaleString('zh-CN',{hour12:false});
+  const newRecs = rows.map(r=>({ id:nid(), pid:r.p.id, type, label:r.label, qty:r.units, note:'',
+    custId, custName, orderId, odate:dateVal, time:now }));
+  newRecs.reverse(); // 逐条 unshift 后保持输入顺序
+  newRecs.forEach(r=>state.records.unshift(r));
+  save();
+  // 重置表单
+  document.getElementById('fDate').value = todayStr();
+  cInput.value=''; selCustomer=null;
+  document.getElementById('lines').innerHTML='';
+  addLine();
+  render();
+  toast('✅ 已记 1 张单（'+rows.length+' 行）');
+}
+
+function delOrder(oid){
+  if(!confirm('删除整张单（含全部明细）？')) return;
+  state.records = state.records.filter(r=>String(r.orderId||'')!==String(oid));
+  save(); render(); renderOrders();
+}
+
+/* ---------- 结余/流水渲染 ---------- */
+function stockOf(pid){
   let q = 0;
   state.records.forEach(r=>{
     if(r.pid!==pid) return;
@@ -328,49 +439,52 @@ function fmtStock(units, p){
   if(!p) return units;
   if(units===0) return '—';
   const cases = Math.floor(units / p.perCase), left = units % p.perCase;
-  if(cases===0) return left + p.unitName; // 不足一件只显示零头
+  if(cases===0) return left + p.unitName;
   return cases + '件' + (left ? '零' + left + p.unitName : '');
 }
-
-function addRec(){
-  const qty = parseInt(document.getElementById('fQty').value);
-  const note = document.getElementById('fNote').value.trim();
-  if(!selProduct) return alert('请先输入选择产品（输入名字可选，或点"+ 新增产品"）');
-  if(!qty || qty<=0) return alert('请输入正确数量');
-  const p = selProduct;
-  let units = qty, label = (unit==='case' ? qty+'件' : qty+p.unitName);
-  if(unit==='case'){
-    units = qty * p.perCase;
-    if(type!=='in') label += '（='+units+p.unitName+'）';
+function custNameOf(r){
+  if(r.custId){
+    const c = state.customers.find(x=>x.id===r.custId);
+    return c ? c.name : (r.custName || '');
   }
-  if(type==='out' && units > stockOf(p.id))
-    if(!confirm('⚠️ 卖出大于当前车上结余（'+fmtStock(stockOf(p.id),p)+'），确定没记错？')) return;
-  // 客户处理：选中的用之；输入了新名字自动建档
-  let custId = null, custName = '';
-  if(type!=='in'){
-    if(selCustomer){ custId = selCustomer.id; }
-    else{
-      const txt = cInput.value.trim();
-      if(txt){ useCustomer(txt); custId = selCustomer.id; }
-    }
-    if(custId){ const c = state.customers.find(x=>x.id===custId); custName = c ? c.name : ''; }
-  }
-  state.records.unshift({ id:nid(), pid:p.id, type, label, qty:units, note, custId, custName, time:new Date().toLocaleString('zh-CN',{hour12:false}) });
-  save();
-  document.getElementById('fQty').value=''; document.getElementById('fNote').value='';
-  cInput.value=''; selCustomer=null;
-  render();
+  return '';
+}
+function orderCardsHTML(records){
+  // 按 orderId 分组（老记录无 orderId 时按日期+类型聚合不了，逐条成卡）
+  const groups = [];
+  const idx = {};
+  records.forEach(r=>{
+    const k = r.orderId || ('solo_'+r.id);
+    if(idx[k]===undefined){ idx[k] = groups.length; groups.push({ key:k, head:null, rows:[] }); }
+    const g = groups[idx[k]];
+    g.rows.push(r);
+    if(!g.head) g.head = r; // 组内第一条（unshift 所以为最早提交但展示用其信息）
+  });
+  return groups.map(g=>{
+    const h = g.head;
+    const who = h.type==='in' ? '' : (h.type==='out' ? ('🏪 '+(custNameOf(h)||'（未记客户）')) : TYPE_NAME[h.type]);
+    const neg = g.rows.every(r=>r.type==='out'||r.type==='pout');
+    const pos = g.rows.every(r=>r.type==='in'||r.type==='ret'||r.type==='pin');
+    const lines = g.rows.map(r=>{
+      const p = state.products.find(x=>x.id===r.pid);
+      const n = (r.type==='out'||r.type==='pout');
+      return `<div class="order-line"><span>${p?p.name:'(已删产品)'}</span>
+        <span class="amt ${n?'neg':'pos'}">${n?'−':'+'}${r.label}</span></div>`;
+    }).join('');
+    const delBtn = r => r.orderId ? `<span class="del" onclick="delOrder('${r.orderId}')">🗑</span>` : '';
+    return `<div class="order-card">
+      <div class="order-head">
+        <span><span class="tag ${TYPE_TAG[h.type]}">${TYPE_NAME[h.type]}</span><span class="who">${who}</span></span>
+        <span class="dt">${fmtDateKey(toKey(h))} ${delBtn(h)}</span>
+      </div>${lines}
+    </div>`;
+  }).join('');
 }
 
-function delRec(id){
-  if(!confirm('删除这条记录？')) return;
-  state.records = state.records.filter(r=>String(r.id)!==String(id));
-  save(); render();
-}
-
-function showAddProduct(name){
+function showAddProduct(name, lineDiv){
   document.getElementById('newName').value = name||'';
   document.getElementById('newPer').value=''; document.getElementById('newUnit').value='';
+  window._pendingLine = lineDiv || null;
   dlgProduct.showModal();
 }
 function addProduct(){
@@ -381,16 +495,20 @@ function addProduct(){
   if(!per || per<1) return alert('请填每件数量（如30）');
   state.products.push({ id:'p'+Date.now(), name:n, perCase:per, unitName:u, lastUsed:Date.now() });
   save(); dlgProduct.close(); render();
-  // 新增后直接选中，接着记数量就行
-  const np = state.products[state.products.length-1];
-  selProduct = np; pInput.value = np.name;
-  renderUnitSeg(); updateHint();
+  // 新增后回填到来源行（或新增一行）
+  const div = window._pendingLine || document.querySelector('#lines .line-row:last-child');
+  if(div){
+    const p = state.products[state.products.length-1];
+    div.dataset.pid = p.id;
+    div.querySelector('.l-prod').value = p.name;
+    div.querySelector('.l-unit').textContent = p.unitName;
+  }
+  window._pendingLine = null;
 }
 function delProduct(pid){
   if(state.records.some(r=>r.pid===pid)) return alert('该产品已有流水记录，不能删（否则历史账会乱）');
   if(!confirm('删除产品？')) return;
   state.products = state.products.filter(p=>p.id!==pid);
-  if(selProduct && selProduct.id===pid){ selProduct=null; pInput.value=''; }
   save(); render();
 }
 function delCustomer(cid){
@@ -401,50 +519,49 @@ function delCustomer(cid){
   save(); render();
 }
 
-function custNameOf(r){
-  if(r.custId){
-    const c = state.customers.find(x=>x.id===r.custId);
-    return c ? c.name : (r.custName || '');
-  }
-  return '';
-}
-
-function fmtT(s){ return s.replace(/:\d{2}$/,''); }
-
 function render(){
   const sl = document.getElementById('stockList');
-  if(!state.products.length){ sl.innerHTML = '<div class="empty">还没有产品，先在下方输入产品名或点"+ 新增产品"</div>'; }
+  if(!state.products.length){ sl.innerHTML = '<div class="empty">还没有产品，记单时输入产品名即可新增</div>'; }
   else sl.innerHTML = state.products.map(p=>{
     const q = stockOf(p.id);
     return `<div class="stock-row">
       <span>${p.name} <span style="color:#bbb;font-size:12px" onclick="delProduct('${p.id}')">✕</span></span>
-      <span class="qty ${q>0?'pos':'zero'}">${q>0?fmtStock(q,p):'0'}
+      <span class="qty ${q>0?'pos':(q<0?'neg':'zero')}">${q>0?fmtStock(q,p):(q<0?'超 '+fmtStock(-q,p):'0')}
         <small>${q>0?('共'+q+p.unitName):''}</small></span>
     </div>`;
   }).join('');
 
+  // 最近单据速览：最近 4 组（单）
+  const seen = {};
+  let cnt = 0;
+  for(const r of state.records){
+    const k = r.orderId || ('solo_'+r.id);
+    if(!seen[k]){ seen[k]=1; if(++cnt>=4) break; }
+  }
+  const recs = state.records.filter(r=>seen[r.orderId || ('solo_'+r.id)]).slice(0, 40);
   const rl = document.getElementById('recList');
-  if(!state.records.length){ rl.innerHTML = '<div class="empty">暂无流水</div>'; }
-  else rl.innerHTML = state.records.map(r=>{
-    const p = state.products.find(x=>x.id===r.pid);
-    const cn = custNameOf(r);
-    return `<div class="rec">
-      <div>
-        <span class="tag ${TYPE_TAG[r.type]}">${TYPE_NAME[r.type]}</span>
-        <b style="margin-left:6px">${p?p.name:'(已删产品)'}</b>
-        <span class="amt">${(r.type==='out'||r.type==='pout')?'−':'+'}${r.label}</span>
-        <div class="info">${cn?('🏪'+cn+' · '):''}${r.note?r.note+' · ':''}${fmtT(r.time)}</div>
-      </div>
-      <span class="del" onclick="delRec('${r.id}')">🗑</span>
-    </div>`;
-  }).join('');
+  rl.innerHTML = recs.length ? orderCardsHTML(recs) : '<div class="empty">暂无单据</div>';
 
-  renderUnitSeg(); updateHint();
+  updateHint();
   if(!document.getElementById('page-sum').classList.contains('hidden')){ renderSum(); renderCustSum(); }
   if(!document.getElementById('page-pan').classList.contains('hidden')) renderPan();
+  if(!document.getElementById('page-find').classList.contains('hidden')) renderOrders();
 }
 
+/* ---------- 查单 ---------- */
+function renderOrders(){
+  const el = document.getElementById('orderList');
+  if(!state.records.length){ el.innerHTML = '<div class="empty">还没有记录</div>'; return; }
+  const q = document.getElementById('qDate').value;
+  if(!q){ el.innerHTML = '<div class="empty">上面选个日期，看那天拿了/卖了什么</div>'; return; }
+  const recs = state.records.filter(r=>toKey(r)===q);
+  el.innerHTML = recs.length ? orderCardsHTML(recs) : '<div class="empty">'+fmtDateKey(q)+' 没有单据</div>';
+}
+
+/* ---------- 汇总 ---------- */
 function renderSum(){
+  const hasRet = state.records.some(r=>r.type==='ret');
+  document.getElementById('sumHead').innerHTML = '<tr><th>产品</th><th>拿货</th><th>卖出</th>'+(hasRet?'<th>退货</th>':'')+'<th>盘点±</th><th>车上应有</th></tr>';
   document.getElementById('sumBody').innerHTML = state.products.map(p=>{
     let tin=0,tout=0,tret=0,tpan=0;
     state.records.forEach(r=>{
@@ -456,12 +573,12 @@ function renderSum(){
       else if(r.type==='pout') tpan-=r.qty;
     });
     const bal = tin-tout+tret+tpan;
-    return `<tr><td>${p.name}</td><td>${fmtStock(tin,p)}</td><td>${fmtStock(tout,p)}</td><td>${fmtStock(tret,p)}</td><td>${tpan>0?'+'+fmtStock(tpan,p):(tpan<0?'−'+fmtStock(-tpan,p):'—')}</td><td><b>${fmtStock(bal,p)}</b></td></tr>`;
+    return `<tr><td>${p.name}</td><td>${fmtStock(tin,p)}</td><td>${fmtStock(tout,p)}</td>${hasRet?('<td>'+fmtStock(tret,p)+'</td>'):''}<td>${tpan>0?'+'+fmtStock(tpan,p):(tpan<0?'−'+fmtStock(-tpan,p):'—')}</td><td><b>${fmtStock(bal,p)}</b></td></tr>`;
   }).join('') || '<tr><td colspan="6" class="empty">暂无数据</td></tr>';
 }
 
 function renderCustSum(){
-  const map = {}; // custId|null -> {pid -> qty}
+  const map = {};
   state.records.forEach(r=>{
     if(r.type!=='out' && r.type!=='ret') return;
     const k = r.custId || '__none__';
@@ -478,15 +595,15 @@ function renderCustSum(){
     const detail = Object.keys(map[k]).map(pid=>{
       const p = state.products.find(x=>x.id===pid);
       const q = map[k][pid];
-      return `${p?p.name:'?'} ${q>0?fmtStock(q,p):fmtStock(Math.abs(q),p)+'（退货多）'}`;
+      return `${p?p.name:'?'} ${q>=0?fmtStock(q,p):fmtStock(Math.abs(q),p)+'（退多）'}`;
     }).join('<br>');
     return `<tr><td>${name}</td><td class="cust-detail">${detail}</td></tr>`;
   }).join('') : '<tr><td colspan="2" class="empty">暂无客户流水</td></tr>';
 }
 
 /* ---------- 盘点 ---------- */
-let panMode = 'input';        // input 录入 | result 结果
-let panEntries = {};          // pid -> {c:件, l:零}
+let panMode = 'input';
+let panEntries = {};
 let panResult = [];
 
 function panInp(pid, k, v){ (panEntries[pid] = panEntries[pid]||{c:'',l:''})[k] = v; }
@@ -505,7 +622,7 @@ function renderPan(){
             零 <input type="number" min="0" inputmode="numeric" placeholder="${p.unitName}" value="${e.l}" oninput="panInp('${p.id}','l',this.value)"> ${p.unitName}
           </div>
         </div>`;
-      }).join('') : '<div class="empty">还没有产品，先去记账页新增</div>') +
+      }).join('') : '<div class="empty">还没有产品，先去记单页新增</div>') +
       `<div class="pan-btns"><button class="btn-fix" style="background:#2563eb" onclick="panCompare()">🔍 对比</button></div>`;
   }else{
     let nOk=0, nBad=0, nMore=0;
@@ -523,7 +640,7 @@ function renderPan(){
           <span class="diff">${txt}</span>
         </div>`;
       }).join('') +
-      `<div class="hint" style="margin-top:8px">🔴 少了：可能漏记卖出或丢货；🟡 多了：可能漏记拿货或退货。</div>
+      `<div class="hint" style="margin-top:8px">🔴 少了：可能漏记卖出或丢货；🟡 多了：可能漏记拿货。</div>
       <div class="pan-btns">
         <button class="btn-back" onclick="panBackEdit()">返回修改</button>
         <button class="btn-fix" onclick="panFix()">💊 一键补账拉平</button>
@@ -538,8 +655,7 @@ function panCompare(){
     const e = panEntries[p.id];
     if(!e || (e.c==='' && e.l==='')) return;
     const act = (parseInt(e.c)||0)*p.perCase + (parseInt(e.l)||0);
-    const exp = stockOf(p.id);
-    rows.push({ p, act, exp, diff: act-exp });
+    rows.push({ p, act, exp: stockOf(p.id), diff: act-stockOf(p.id) });
   });
   if(!rows.length) return alert('先填至少一个产品的实盘数');
   panResult = rows; panMode = 'result'; renderPan();
@@ -550,7 +666,7 @@ function panReset(){ panEntries={}; panResult=[]; panMode='input'; renderPan(); 
 
 function panFix(){
   const diffs = panResult.filter(r=>r.diff!==0);
-  if(!diffs.length){ alert('全部一致，无需补账'); panReset(); return; }
+  if(!diffs.length){ toast('全部一致，无需补账'); panReset(); return; }
   const summary = diffs.map(r=>
     `${r.p.name} ${r.diff<0?'少':'多'} ${fmtStock(Math.abs(r.diff),r.p)} → 补记${r.diff<0?'盘亏':'盘盈'}`
   ).join('\n');
@@ -566,16 +682,16 @@ function panFix(){
     });
   });
   save(); panReset(); render();
-  alert('已补账，账实拉平 ✅');
+  toast('已补账，账实拉平 ✅');
 }
 
 /* ---------- 导出导入 ---------- */
 function exportCSV(){
   if(!state.records.length) return alert('暂无流水');
-  let csv = '\uFEFF产品,类型,数量,折合,客户,备注,时间\n';
+  let csv = '\uFEFF日期,产品,类型,数量,折合,客户,备注,时间\n';
   state.records.forEach(r=>{
     const p = state.products.find(x=>x.id===r.pid);
-    csv += `"${p?p.name:''}","${TYPE_NAME[r.type]}","${r.label}","${r.qty}${p?p.unitName:''}","${custNameOf(r)}","${(r.note||'').replace(/"/g,'""')}","${r.time}"\n`;
+    csv += `"${fmtDateKey(toKey(r))}","${p?p.name:''}","${TYPE_NAME[r.type]}","${r.label}","${r.qty}${p?p.unitName:''}","${custNameOf(r)}","${(r.note||'').replace(/"/g,'""')}","${r.time}"\n`;
   });
   dl(new Blob([csv],{type:'text/csv'}), '存货流水_'+new Date().toISOString().slice(0,10)+'.csv');
 }
@@ -590,13 +706,15 @@ function importData(inp){
       if(!d.products || !d.records) throw 0;
       if(!d.customers) d.customers = [];
       if(!confirm('导入会覆盖当前所有数据，继续？')) return;
-      state = d; save(); render(); alert('导入成功');
+      state = d; save(); render(); toast('导入成功');
     }catch(e){ alert('文件格式不对'); }
   };
   rd.readAsText(f); inp.value='';
 }
 
-setType('in'); render();
+document.getElementById('fDate').value = todayStr();
+document.getElementById('qDate').value = todayStr();
+setType('in'); addLine(); render();
 </script>
 </body>
 </html>
