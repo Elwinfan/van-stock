@@ -121,7 +121,8 @@
   #toast { position:fixed; left:50%; bottom:140px; transform:translateX(-50%) translateY(10px); background:rgba(20,20,20,.85); color:#fff; padding:10px 22px; border-radius:20px; font-size:14px; opacity:0; pointer-events:none; transition:.25s; z-index:99; white-space:nowrap; }
   #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
-  dialog { border:none; border-radius:12px; padding:16px; width:86%; max-width:400px; max-height:85vh; overflow-y:auto; }
+  dialog { border:none; border-radius:12px; padding:16px; width:86%; max-width:400px; max-height:85vh; overflow-y:auto;
+    position:fixed; inset:0; margin:auto; } /* inset+margin:auto 强制居中，防微信等内核弹窗跑左上角 */
   dialog::backdrop { background:rgba(0,0,0,.4); }
   dialog h4 { margin-bottom:10px; }
   dialog input { width:100%; margin-bottom:10px; }
@@ -259,6 +260,15 @@
     <button style="background:#eee;color:#555" onclick="dlgEdit.close()">取消</button>
     <button style="background:#2563eb;color:#fff" onclick="saveEditOrder()">保存修改</button>
   </div>
+</dialog>
+
+<dialog id="dlgWipe">
+  <h4>⚙️ 数据管理（隐藏入口）</h4>
+  <div class="hint" id="wipeStat"></div>
+  <div class="hint" style="color:#c0392b; margin-bottom:12px">⚠️ 清空前会自动下载一份备份文件，后悔可在顶部「导入」恢复</div>
+  <div class="row"><button style="background:#eee;color:#555" onclick="dlgWipe.close()">关闭</button></div>
+  <div class="row" style="margin-top:8px"><button style="background:#f5a623;color:#fff" onclick="wipeData('records')">🗑 清空流水（保留产品/客户）</button></div>
+  <div class="row" style="margin-top:8px"><button style="background:#c0392b;color:#fff" onclick="wipeData('all')">🗑 清空全部数据</button></div>
 </dialog>
 
 <input type="file" id="imp" accept=".json" class="hidden" onchange="importData(this)">
@@ -1000,6 +1010,33 @@ function importData(inp){
 
 document.getElementById('fDate').value = todayStr();
 if(!state.backupAt){ state.backupAt = Date.now(); save(); } // 首次静默起算，7天后开始提醒备份
+
+/* ---------- 隐藏数据管理：连点标题5次 ---------- */
+let tapCount = 0, tapTimer = null;
+document.querySelector('h1').addEventListener('click', ()=>{
+  tapCount++;
+  clearTimeout(tapTimer);
+  tapTimer = setTimeout(()=>{ tapCount = 0; }, 900);
+  if(tapCount >= 5){
+    tapCount = 0;
+    document.getElementById('wipeStat').textContent =
+      '当前：' + state.products.length + ' 个产品 · ' + state.customers.length + ' 个客户 · ' + state.records.length + ' 条流水';
+    dlgWipe.showModal();
+  }
+});
+function wipeData(mode){
+  const msg = mode==='all' ? '全部数据（产品+客户+流水）' : '全部流水（保留产品和客户）';
+  if(!confirm('确定清空' + msg + '？\n清空前会自动下载备份文件')) return;
+  if(!confirm('再确认一次：真的要清空？此操作不可撤销（备份除外）')) return;
+  exportData(); // 先自动备份再清，留后路
+  if(mode==='all'){
+    state = { products:[], records:[], customers:[], backupAt:Date.now() };
+  } else {
+    state.records = [];
+  }
+  save(); dlgWipe.close(); render(); renderBackupBar();
+  toast('🗑 已清空，备份文件已自动下载');
+}
 setType('in'); addLine(); render(); renderBackupBar();
 </script>
 </body>
