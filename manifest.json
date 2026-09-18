@@ -1,0 +1,13 @@
+{
+  "name": "车上存货记账",
+  "short_name": "存货记账",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f2f4f7",
+  "theme_color": "#2563eb",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

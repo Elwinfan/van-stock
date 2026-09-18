@@ -3,6 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#2563eb">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="存货记账">
 <title>车上存货记账</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -15,7 +21,7 @@
   .stock-card h2 { font-size:14px; color:#666; margin-bottom:8px; }
   .stock-row { display:flex; justify-content:space-between; align-items:center; padding:9px 4px; border-bottom:1px solid #f0f0f0; font-size:15px; }
   .stock-row:last-child { border-bottom:none; }
-  .stock-row .qty { font-weight:700; font-size:16px; text-align:right; }
+  .stock-row .qty { font-weight:700; font-size:20px; text-align:right; }
   .stock-row .qty small { display:block; font-weight:400; font-size:12px; color:#999; }
   .qty.pos { color:#0a7d32; } .qty.zero { color:#aaa; } .qty.neg { color:#c0392b; }
 
@@ -78,6 +84,14 @@
   .mnav:active { background:#f0f6ff; }
   .day-head { font-size:13px; color:#2563eb; font-weight:700; margin:14px 0 8px; border-left:3px solid #2563eb; padding-left:8px; }
 
+  /* 结余速览胶囊条 */
+  .chips { display:flex; gap:8px; overflow-x:auto; padding:2px 2px 10px; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  .chips::-webkit-scrollbar { display:none; }
+  .chip { flex:none; background:#fff; border:1px solid #e0e3e8; border-radius:20px; padding:7px 13px; font-size:13px; color:#333; white-space:nowrap; }
+  .chip b { font-size:14px; color:#0a7d32; margin-left:2px; }
+  .chip.zero b { color:#aaa; } .chip.neg b { color:#c0392b; }
+  .chip:active { background:#f0f6ff; }
+
   .top-actions { position:fixed; top:10px; right:12px; display:flex; gap:6px; z-index:50; }
   .top-actions button { padding:6px 10px; font-size:12px; border:1px solid #ccc; background:#fff; border-radius:6px; }
 
@@ -130,6 +144,47 @@
   dialog button { flex:1; padding:10px; border-radius:8px; border:none; font-size:15px; font-weight:600; }
   dialog .fr { display:flex; gap:8px; }
   dialog .fr input[type=number]{ width:90px; }
+
+  /* 深色模式：跟随系统 */
+  @media (prefers-color-scheme: dark) {
+    body { background:#111418; color:#e8eaed; }
+    h1 { color:#e8eaed; } .sub { color:#8a919c; }
+    .stock-card,.panel,.rec,.order-card,.sum-table,.pan-row,.res-row,.chip,.ac-list,.mnav,.toolbar button,.top-actions button { background:#1d2126; }
+    .chips .chip { border-color:#3a4048; color:#e8eaed; }
+    .stock-card h2,.panel h3,.hint,.order-head .dt,.rec .info,.order-line .amt.pos+*,.cust-detail { color:#9aa0a6; }
+    .stock-row,.order-head { border-bottom-color:#2a2f36; }
+    select,input { background:#1d2126; color:#e8eaed; border-color:#3a4048; }
+    .seg button { background:#1d2126; border-color:#3a4048; color:#c3c8cf; }
+    .seg button.on-in { background:#123524; border-color:#4ecb71; color:#4ecb71; }
+    .seg button.on-out { background:#3a1714; border-color:#ff7b69; color:#ff7b69; }
+    .seg button.on-back { background:#12263f; border-color:#6ea8ff; color:#6ea8ff; }
+    .unit-seg { border-color:#3a4048; }
+    .unit-seg button { background:#1d2126; color:#9aa0a6; }
+    .line-row { background:#171a1e; border-color:#2a2f36; }
+    .l-del,.del { color:#ff7b69; }
+    .add-line { background:transparent; border-color:#3a4048; color:#6ea8ff; }
+    .ac-item { border-bottom-color:#2a2f36; color:#e8eaed; }
+    .ac-item:active,.ac-item:hover { background:#262b31; }
+    .sum-table th { background:#262b31; color:#9aa0a6; }
+    .sum-table th,.sum-table td { border-bottom-color:#2a2f36; }
+    nav { background:#1d2126; border-top-color:#2a2f36; }
+    nav button { color:#8a919c; }
+    nav button.on { color:#6ea8ff; border-top-color:#6ea8ff; }
+    dialog { background:#1d2126; color:#e8eaed; }
+    .tag.in { background:#123524; color:#4ecb71; }
+    .tag.out { background:#3a1714; color:#ff7b69; }
+    .tag.ret { background:#3a2d0f; color:#ffc94d; }
+    .tag.back { background:#12263f; color:#6ea8ff; }
+    #backupBar { background:#2a230d; border-color:#4d3f12; color:#e0c468; }
+    .res-row.ok { border-left-color:#4ecb71; }
+    .res-row.bad { background:#2a1512; border-left-color:#ff7b69; }
+    .res-row.more { background:#2a230d; border-left-color:#ffc94d; }
+    .stat-bar span { background:#262b31; }
+    .btn-back,.btn-redo { background:#262b31; color:#c3c8cf; }
+    .mnav { border-color:#3a4048; color:#6ea8ff; }
+    .mnav:active { background:#262b31; }
+    .empty { color:#6a7078; }
+  }
 </style>
 </head>
 <body>
@@ -147,6 +202,7 @@
   <div class="sub">按单记账 · 日期可查 · 盘点核对账实</div>
 
   <div id="page-stock">
+    <div class="chips" id="stockChips"></div>
     <div class="panel">
       <h3>➕ 记一张单</h3>
       <div class="seg">
@@ -427,8 +483,23 @@ function setLineUnit(btn, u){
   seg.querySelector('.l-unit').classList.toggle('on', u==='unit');
 }
 
+// 点结余胶囊 → 自动加一行并预填该产品，直接聚焦数量
+function chipAdd(pid){
+  const p = state.products.find(x=>x.id===pid); if(!p) return;
+  let div = document.querySelector('#lines .line-row:last-child');
+  if(!div || div.dataset.pid || div.querySelector('.l-qty').value){
+    addLine();
+    div = document.querySelector('#lines .line-row:last-child');
+  }
+  div.dataset.pid = p.id;
+  div.querySelector('.l-prod').value = p.name;
+  div.querySelector('.l-unit').textContent = p.unitName;
+  div.querySelector('.l-qty').focus();
+}
+
 function setType(t){
   type = t;
+  try{ localStorage.setItem('van_last_type', t); }catch(e){}
   ['in','out','back'].forEach(k=>{
     document.getElementById('b-'+k).className = k===t ? 'on-'+k : '';
   });
@@ -443,7 +514,11 @@ function updateHint(){
     '💡 卖出单：选客户 + 多行产品，一次入账。默认按件，可切零头';
 }
 
+let submitLock = false;
 function submitOrder(){
+  if(submitLock) return;              // 防手抖连点记出重复单
+  submitLock = true;
+  setTimeout(()=>{ submitLock = false; }, 800);
   const dateVal = document.getElementById('fDate').value;
   if(!dateVal) return alert('请选日期');
   // 客户（卖出必填）
@@ -489,6 +564,7 @@ function submitOrder(){
   newRecs.reverse(); // 逐条 unshift 后保持输入顺序
   newRecs.forEach(r=>state.records.unshift(r));
   save();
+  if(navigator.vibrate) navigator.vibrate(30); // 记单成功震一下（安卓）
   // 重置表单
   document.getElementById('fDate').value = todayStr();
   cInput.value=''; selCustomer=null;
@@ -752,6 +828,14 @@ function delCustomer(cid){
 }
 
 function render(){
+  // 结余速览胶囊
+  const chips = document.getElementById('stockChips');
+  chips.innerHTML = state.products.length ? state.products.map(p=>{
+    const q = stockOf(p.id);
+    const txt = q>0 ? fmtStock(q,p) : (q<0 ? '超'+fmtStock(-q,p) : '0');
+    return '<div class="chip '+(q>0?'':(q<0?'neg':'zero'))+'" onclick="chipAdd(\''+p.id+'\')">'+p.name+'<b>'+txt+'</b></div>';
+  }).join('') : '';
+
   const sl = document.getElementById('stockList');
   if(!state.products.length){ sl.innerHTML = '<div class="empty">还没有产品，记单时输入产品名即可新增</div>'; }
   else sl.innerHTML = state.products.map(p=>{
@@ -1037,7 +1121,9 @@ function wipeData(mode){
   save(); dlgWipe.close(); render(); renderBackupBar();
   toast('🗑 已清空，备份文件已自动下载');
 }
-setType('in'); addLine(); render(); renderBackupBar();
+setType((()=>{ const lt = localStorage.getItem('van_last_type'); return (lt==='out'||lt==='back') ? lt : 'in'; })());
+addLine(); render(); renderBackupBar();
+if('serviceWorker' in navigator && location.protocol==='https:'){ window.addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); }); }
 </script>
 </body>
 </html>
