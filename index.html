@@ -147,11 +147,6 @@
   <div class="sub">按单记账 · 日期可查 · 盘点核对账实</div>
 
   <div id="page-stock">
-    <div class="stock-card">
-      <h2>📦 当前车上结余（账面）</h2>
-      <div id="stockList"></div>
-    </div>
-
     <div class="panel">
       <h3>➕ 记一张单</h3>
       <div class="seg">
@@ -172,6 +167,11 @@
       <button class="add-line" onclick="addLine()">＋ 加一行产品</button>
       <div class="hint" id="typeHint"></div>
       <button class="add-btn" onclick="submitOrder()">确认记单</button>
+    </div>
+
+    <div class="stock-card">
+      <h2>📦 当前车上结余（账面）</h2>
+      <div id="stockList"></div>
     </div>
 
     <h3 style="font-size:14px;color:#666;margin:2px 0 8px;">📋 最近单据（点卡片修改 · 查历史去「查单」页）</h3>
