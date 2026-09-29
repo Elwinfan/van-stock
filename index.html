@@ -337,7 +337,7 @@
   <div class="hint" id="imgHint">长按图片可保存/转发；或点「下载」</div>
   <div class="row">
     <button style="background:#eee;color:#555" onclick="dlgImage.close()">关闭</button>
-    <a id="imgDl" href="#" download="车上存货结余.jpg" style="flex:1;display:flex;align-items:center;justify-content:center;background:#2563eb;color:#fff;border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;padding:10px 0">⬇️ 下载JPG</a>
+    <a id="imgDl" href="#" download="车上存货结余.jpg" style="flex:1;display:flex;align-items:center;justify-content:center;background:#2563eb;color:#fff;border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;padding:10px 0;line-height:1">下载 JPG</a>
   </div>
 </dialog>
 
@@ -1111,7 +1111,8 @@ function exportStockImage(){
   if(!state.products.length) return toast('还没有产品');
   const W = 720, pad = 44, lineH = 96, headH = 178;
   const H = headH + state.products.length*lineH + 86;
-  const dpr = 2;
+  // 产品多时降清晰度，防 iOS canvas 面积超限（>约1600万像素生成空白图）
+  const dpr = state.products.length > 40 ? 1 : 2;
   const c = document.createElement('canvas');
   c.width = W*dpr; c.height = H*dpr;
   const ctx = c.getContext('2d');
@@ -1132,7 +1133,11 @@ function exportStockImage(){
     const y = headH + i*lineH, mid = y + lineH/2;
     const q = stockOf(p.id);
     ctx.fillStyle = '#222'; ctx.font = '30px ' + FONT; ctx.textAlign = 'left';
-    ctx.fillText(p.name, pad, mid - 12);
+    // 超长品名截断，避免撞到右侧数量
+    let name = p.name;
+    while(ctx.measureText(name).width > 360 && name.length > 2) name = name.slice(0, -1);
+    if(name !== p.name) name += '…';
+    ctx.fillText(name, pad, mid - 12);
     let qtyTxt, qtyColor, smallTxt = '';
     if(q > 0){ qtyTxt = fmtStock(q, p); qtyColor = '#0a7d32'; smallTxt = '共' + q + p.unitName; }
     else if(q < 0){ qtyTxt = '超 ' + fmtStock(-q, p); qtyColor = '#c0392b'; }
@@ -1147,17 +1152,27 @@ function exportStockImage(){
   ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
   ctx.fillStyle = '#999'; ctx.font = '22px ' + FONT;
   ctx.fillText('共 ' + state.products.length + ' 个产品 · 生成于 ' + new Date().toLocaleString('zh-CN', {hour12:false}), pad, H - 38);
-  // JPG（白底无损观感，文件小）；微信内置浏览器禁止网页下载，引导长按保存
-  const url = c.toDataURL('image/jpeg', 0.92);
-  document.getElementById('imgOut').src = url;
-  const isWeChat = /MicroMessenger/i.test(navigator.userAgent);
+  // 展示用 dataURL（微信长按保存最稳）；下载用 blob（安卓浏览器才保得住文件名）
+  const dataUrl = c.toDataURL('image/jpeg', 0.92);
+  document.getElementById('imgOut').src = dataUrl;
+  const isWeChat = /MicroMessenger|wxwork/i.test(navigator.userAgent);
   const a = document.getElementById('imgDl');
-  a.href = url; a.download = '车上存货结余_' + todayStr() + '.jpg';
+  const blob = new Blob([dataUrltoArr(dataUrl)], { type: 'image/jpeg' });
+  if(a._url) URL.revokeObjectURL(a._url);
+  a._url = URL.createObjectURL(blob);
+  a.href = a._url; a.download = '车上存货结余_' + todayStr() + '.jpg';
   a.style.display = isWeChat ? 'none' : '';
   document.getElementById('imgHint').textContent = isWeChat
     ? '👆 微信里无法直接下载：长按上方图片 → 保存到手机（JPG），可直接转发'
-    : '长按图片可转发；点「下载JPG」直接保存';
+    : '点「下载 JPG」自动保存到浏览器下载里，也可长按图片转发';
   dlgImage.showModal();
+}
+function dataUrltoArr(dataurl){
+  const b64 = dataurl.split(',')[1];
+  const bin = atob(b64);
+  const arr = new Uint8Array(bin.length);
+  for(let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return arr;
 }
 
 document.getElementById('fDate').value = todayStr();
