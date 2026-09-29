@@ -334,10 +334,10 @@
 <dialog id="dlgImage">
   <h4>📷 结余清单图片</h4>
   <img id="imgOut" alt="结余清单" style="width:100%;border:1px solid #e5e5e5;border-radius:8px;background:#fff">
-  <div class="hint">长按图片可保存/转发；或点「下载」存 PNG</div>
+  <div class="hint" id="imgHint">长按图片可保存/转发；或点「下载」</div>
   <div class="row">
     <button style="background:#eee;color:#555" onclick="dlgImage.close()">关闭</button>
-    <a id="imgDl" download="车上存货结余.png" style="flex:1;display:flex;align-items:center;justify-content:center;background:#2563eb;color:#fff;border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;padding:10px 0">⬇️ 下载</a>
+    <a id="imgDl" href="#" download="车上存货结余.jpg" style="flex:1;display:flex;align-items:center;justify-content:center;background:#2563eb;color:#fff;border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;padding:10px 0">⬇️ 下载JPG</a>
   </div>
 </dialog>
 
@@ -1147,10 +1147,16 @@ function exportStockImage(){
   ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
   ctx.fillStyle = '#999'; ctx.font = '22px ' + FONT;
   ctx.fillText('共 ' + state.products.length + ' 个产品 · 生成于 ' + new Date().toLocaleString('zh-CN', {hour12:false}), pad, H - 38);
-  const url = c.toDataURL('image/png');
+  // JPG（白底无损观感，文件小）；微信内置浏览器禁止网页下载，引导长按保存
+  const url = c.toDataURL('image/jpeg', 0.92);
   document.getElementById('imgOut').src = url;
+  const isWeChat = /MicroMessenger/i.test(navigator.userAgent);
   const a = document.getElementById('imgDl');
-  a.href = url; a.download = '车上存货结余_' + todayStr() + '.png';
+  a.href = url; a.download = '车上存货结余_' + todayStr() + '.jpg';
+  a.style.display = isWeChat ? 'none' : '';
+  document.getElementById('imgHint').textContent = isWeChat
+    ? '👆 微信里无法直接下载：长按上方图片 → 保存到手机（JPG），可直接转发'
+    : '长按图片可转发；点「下载JPG」直接保存';
   dlgImage.showModal();
 }
 
