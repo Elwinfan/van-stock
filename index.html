@@ -132,6 +132,8 @@
   #backupBar .go { background:#b8860b; color:#fff; }
   #backupBar .no { background:transparent; color:#999; font-size:16px; }
 
+  .img-btn { font-size:12px; padding:5px 10px; border:1px solid #d9dce1; background:#f6f8fa; border-radius:6px; color:#2563eb; font-weight:600; flex:none; }
+
   #toast { position:fixed; left:50%; bottom:140px; transform:translateX(-50%) translateY(10px); background:rgba(20,20,20,.85); color:#fff; padding:10px 22px; border-radius:20px; font-size:14px; opacity:0; pointer-events:none; transition:.25s; z-index:99; white-space:nowrap; }
   #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
@@ -226,7 +228,9 @@
     </div>
 
     <div class="stock-card">
-      <h2>📦 当前车上结余（账面）</h2>
+      <h2 style="display:flex;justify-content:space-between;align-items:center">📦 当前车上结余（账面）
+        <button class="img-btn" onclick="exportStockImage()">📷 生成图片</button>
+      </h2>
       <div id="stockList"></div>
     </div>
 
@@ -325,6 +329,16 @@
   <div class="row"><button style="background:#eee;color:#555" onclick="dlgWipe.close()">关闭</button></div>
   <div class="row" style="margin-top:8px"><button style="background:#f5a623;color:#fff" onclick="wipeData('records')">🗑 清空流水（保留产品/客户）</button></div>
   <div class="row" style="margin-top:8px"><button style="background:#c0392b;color:#fff" onclick="wipeData('all')">🗑 清空全部数据</button></div>
+</dialog>
+
+<dialog id="dlgImage">
+  <h4>📷 结余清单图片</h4>
+  <img id="imgOut" alt="结余清单" style="width:100%;border:1px solid #e5e5e5;border-radius:8px;background:#fff">
+  <div class="hint">长按图片可保存/转发；或点「下载」存 PNG</div>
+  <div class="row">
+    <button style="background:#eee;color:#555" onclick="dlgImage.close()">关闭</button>
+    <a id="imgDl" download="车上存货结余.png" style="flex:1;display:flex;align-items:center;justify-content:center;background:#2563eb;color:#fff;border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;padding:10px 0">⬇️ 下载</a>
+  </div>
 </dialog>
 
 <input type="file" id="imp" accept=".json" class="hidden" onchange="importData(this)">
@@ -1090,6 +1104,54 @@ function importData(inp){
     }catch(e){ alert('文件格式不对'); }
   };
   rd.readAsText(f); inp.value='';
+}
+
+/* ---------- 结余清单图片 ---------- */
+function exportStockImage(){
+  if(!state.products.length) return toast('还没有产品');
+  const W = 720, pad = 44, lineH = 96, headH = 178;
+  const H = headH + state.products.length*lineH + 86;
+  const dpr = 2;
+  const c = document.createElement('canvas');
+  c.width = W*dpr; c.height = H*dpr;
+  const ctx = c.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const FONT = '-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
+  // 固定白底（发财务，不受手机深色模式影响）
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = '#1a1a1a'; ctx.font = 'bold 38px ' + FONT;
+  ctx.fillText('车上存货结余', pad, 72);
+  ctx.fillStyle = '#888'; ctx.font = '26px ' + FONT;
+  ctx.fillText(fmtDateKey(todayStr()) + ' · 账面', pad, 120);
+  ctx.strokeStyle = '#222'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(pad, 148); ctx.lineTo(W - pad, 148); ctx.stroke();
+  // 明细行
+  ctx.textBaseline = 'middle';
+  state.products.forEach((p, i)=>{
+    const y = headH + i*lineH, mid = y + lineH/2;
+    const q = stockOf(p.id);
+    ctx.fillStyle = '#222'; ctx.font = '30px ' + FONT; ctx.textAlign = 'left';
+    ctx.fillText(p.name, pad, mid - 12);
+    let qtyTxt, qtyColor, smallTxt = '';
+    if(q > 0){ qtyTxt = fmtStock(q, p); qtyColor = '#0a7d32'; smallTxt = '共' + q + p.unitName; }
+    else if(q < 0){ qtyTxt = '超 ' + fmtStock(-q, p); qtyColor = '#c0392b'; }
+    else { qtyTxt = '0'; qtyColor = '#aaa'; }
+    ctx.fillStyle = qtyColor; ctx.font = 'bold 30px ' + FONT; ctx.textAlign = 'right';
+    ctx.fillText(qtyTxt, W - pad, mid - 12);
+    if(smallTxt){ ctx.fillStyle = '#aaa'; ctx.font = '22px ' + FONT; ctx.fillText(smallTxt, W - pad, mid + 26); }
+    ctx.strokeStyle = '#eee'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pad, y + lineH); ctx.lineTo(W - pad, y + lineH); ctx.stroke();
+  });
+  // 底部
+  ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
+  ctx.fillStyle = '#999'; ctx.font = '22px ' + FONT;
+  ctx.fillText('共 ' + state.products.length + ' 个产品 · 生成于 ' + new Date().toLocaleString('zh-CN', {hour12:false}), pad, H - 38);
+  const url = c.toDataURL('image/png');
+  document.getElementById('imgOut').src = url;
+  const a = document.getElementById('imgDl');
+  a.href = url; a.download = '车上存货结余_' + todayStr() + '.png';
+  dlgImage.showModal();
 }
 
 document.getElementById('fDate').value = todayStr();
